@@ -1,0 +1,181 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+{% set page_actions %}
+    {% if not multistore_blocked and test_connection_url %}
+        <button type="button" class="btn btn-secondary" id="ppo-test-connection" data-url="{{ test_connection_url }}">
+            {{ 'Test connection'|trans({}, 'Modules.Ppomniva.Admin') }}
+        </button>
+    {% endif %}
+{% endset %}
+
+{{ include('@Modules/ppomniva/views/templates/admin/partials/_admin_menu.html.twig', {
+    active_tab: 'configuration',
+    page_title: 'Configuration'|trans({}, 'Modules.Ppomniva.Admin'),
+    page_description: 'API credentials, checkout fields and shipping options. Settings here apply to the active shop context.'|trans({}, 'Modules.Ppomniva.Admin'),
+    multistore_blocked: multistore_blocked,
+    multistore_reason: multistore_reason|default(null),
+    page_actions: page_actions,
+}) }}
+
+{% if not multistore_blocked %}
+<div class="ppo-shell">
+
+{# Connection status #}
+{% set status_cls = 'unknown' %}
+{% if connection_status.connected == true %}{% set status_cls = 'connected' %}
+{% elseif connection_status.connected == false %}{% set status_cls = 'disconnected' %}
+{% endif %}
+<div class="ppo-status ppo-status--{{ status_cls }}" id="ppo-connection-status">
+    <span class="ppo-status__dot"></span>
+    <span id="ppo-connection-message">
+        {{ connection_status.message|default('Click "Test connection" to verify your credentials.'|trans({}, 'Modules.Ppomniva.Admin')) }}
+    </span>
+</div>
+
+{# Migration banner #}
+{% if legacy_modules|length > 0 %}
+    {% for legacy in legacy_modules %}
+        <div class="ppo-banner-info">
+            <h4>{{ 'Legacy %name% detected'|trans({'%name%': legacy.name|default('mijoraomniva')}, 'Modules.Ppomniva.Admin') }}</h4>
+            <p>{{ 'We can copy configuration, orders, and carrier settings from the older module so you can disable it cleanly. Run the migration when you are ready, or skip if it is already done.'|trans({}, 'Modules.Ppomniva.Admin') }}</p>
+            <div class="ppo-banner-info__actions">
+                <a class="btn btn-primary" href="{{ migration_preview_url }}">{{ 'Preview migration'|trans({}, 'Modules.Ppomniva.Admin') }}</a>
+                <form method="post" action="{{ migration_skip_url }}" style="display: inline;" data-ppo-loading>
+                    <button type="submit" class="btn btn-secondary">{{ 'Skip / hide banner'|trans({}, 'Modules.Ppomniva.Admin') }}</button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+{% endif %}
+
+{{ form_start(configurationForm, { attr: { 'data-ppo-loading': '' } }) }}
+
+{% set mode = form_mode|default('shop') %}
+
+{# global_toggle: per-store auth is ON, current context is "All shops".
+   Credentials are scoped per shop so we don't render them here, only the
+   toggle that decides the storage scope. The shop-specific cards live in
+   the {% else %} block. #}
+{% if mode == 'global_toggle' %}
+<div class="ppo-banner-info">
+    <strong>{{ 'You are viewing global settings.'|trans({}, 'Modules.Ppomniva.Admin') }}</strong>
+    <p>
+        {{ 'API credentials, checkout fields and the return-service window are stored per shop. To edit them, switch the shop selector at the top of the admin to a specific shop. The toggle below controls the global "per-store authentication" mode that decides whether each shop holds its own credentials.'|trans({}, 'Modules.Ppomniva.Admin') }}
+    </p>
+</div>
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ 'Per-store authentication'|trans({}, 'Modules.Ppomniva.Admin') }}</h3>
+    </div>
+    <div class="ppo-card__body ppo-form">
+        {{ form_row(configurationForm.store_auth_mode) }}
+    </div>
+</div>
+{% else %}
+{# 'shop' (per-shop creds) and 'global_full' (shared creds, edited from
+   "All shops") render the same field set. The only difference is that
+   global_full appends the per-store auth toggle at the bottom. #}
+{% if mode == 'global_full' %}
+<div class="ppo-banner-info">
+    <strong>{{ 'You are editing shared settings.'|trans({}, 'Modules.Ppomniva.Admin') }}</strong>
+    <p>
+        {{ 'Per-store authentication is disabled, so the values you save here are used by every shop on this installation.'|trans({}, 'Modules.Ppomniva.Admin') }}
+    </p>
+</div>
+{% endif %}
+
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ 'API credentials'|trans({}, 'Modules.Ppomniva.Admin') }}</h3>
+        <span class="ppo-card__help">{{ 'Required to talk to Omniva OMX. The same host serves test and production — the environment is decided by the credentials. Turn Live mode off while validating.'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+    </div>
+    <div class="ppo-card__body ppo-form">
+        {{ form_row(configurationForm.api_user) }}
+        {{ form_row(configurationForm.api_pass) }}
+        {{ form_row(configurationForm.agent_id) }}
+        {{ form_row(configurationForm.live_mode) }}
+    </div>
+</div>
+
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ 'Shipping options'|trans({}, 'Modules.Ppomniva.Admin') }}</h3>
+        <span class="ppo-card__help">{{ 'Cash on delivery, age-verified delivery, and label format.'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+    </div>
+    <div class="ppo-card__body ppo-form">
+        {{ form_row(configurationForm.cod_enabled) }}
+        {{ form_row(configurationForm['18_plus_service']) }}
+        {{ form_row(configurationForm.label_format) }}
+    </div>
+</div>
+
+{% if mode == 'global_full' %}
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ 'Per-store authentication'|trans({}, 'Modules.Ppomniva.Admin') }}</h3>
+    </div>
+    <div class="ppo-card__body ppo-form">
+        {{ form_row(configurationForm.store_auth_mode) }}
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<div class="ppo-form-actions">
+    <button type="submit" class="btn btn-primary">{{ 'Save changes'|trans({}, 'Admin.Actions') }}</button>
+    <span style="font-size: var(--ppo-text-sm); color: var(--ppo-text-muted);">
+        {{ 'Module version: %v%'|trans({'%v%': module_version|default('?')}, 'Modules.Ppomniva.Admin') }}
+    </span>
+</div>
+
+{# form_end emits any unrendered children — in particular the CSRF _token
+   field that Symfony adds automatically. We used to pass render_rest: false
+   here, which stripped the token along with any leftover fields and made
+   every save silently fail isValid(). The controller now hands us a
+   per-context form (mode='shop' or mode='global') that only contains the
+   fields the template renders explicitly, so default form_end is correct. #}
+{{ form_end(configurationForm) }}
+
+</div>
+
+<script>
+(function () {
+    var btn = document.getElementById('ppo-test-connection');
+    if (!btn) return;
+    var statusEl = document.getElementById('ppo-connection-status');
+    var msgEl = document.getElementById('ppo-connection-message');
+
+    btn.addEventListener('click', function () {
+        if (window.PPOmnivaAdmin && window.PPOmnivaAdmin.setLoading) {
+            window.PPOmnivaAdmin.setLoading(btn, true);
+        } else {
+            btn.disabled = true;
+        }
+        statusEl.classList.remove('ppo-status--connected', 'ppo-status--disconnected');
+        statusEl.classList.add('ppo-status--unknown');
+
+        fetch(btn.dataset.url, { method: 'POST', credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                msgEl.textContent = data.message || '';
+                statusEl.classList.remove('ppo-status--unknown');
+                statusEl.classList.add(data.success ? 'ppo-status--connected' : 'ppo-status--disconnected');
+            })
+            .catch(function (err) {
+                msgEl.textContent = err.message || 'Test failed';
+                statusEl.classList.remove('ppo-status--unknown');
+                statusEl.classList.add('ppo-status--disconnected');
+            })
+            .finally(function () {
+                if (window.PPOmnivaAdmin && window.PPOmnivaAdmin.setLoading) {
+                    window.PPOmnivaAdmin.setLoading(btn, false);
+                } else {
+                    btn.disabled = false;
+                }
+            });
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

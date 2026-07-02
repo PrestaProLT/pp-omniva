@@ -1,0 +1,281 @@
+ps_ppomniva_dashboard:
+    path: /ppomniva/dashboard
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\DashboardController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_configuration:
+    path: /ppomniva/configuration
+    methods: [GET, POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\ConfigurationController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_test_connection:
+    path: /ppomniva/test-connection
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\ConfigurationController::testConnection'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Phase 4: Admin Order Management ---
+
+ps_ppomniva_generate_label:
+    path: /ppomniva/order/generate-label
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::generateLabel'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_print_label:
+    path: /ppomniva/order/print-label
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::printLabel'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_print_manifest:
+    path: /ppomniva/order/print-manifest
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::printManifest'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_close_manifest:
+    path: /ppomniva/order/close-manifest
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::closeManifest'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_call_courier:
+    path: /ppomniva/order/call-courier
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::callCourier'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_tracking:
+    path: /ppomniva/order/tracking
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::tracking'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_order_data:
+    path: /ppomniva/order/data
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::orderData'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_update_shipment:
+    path: /ppomniva/order/update-shipment
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::updateShipmentDetails'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_regenerate_label:
+    path: /ppomniva/order/regenerate-label
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::regenerateLabel'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_order_terminals:
+    path: /ppomniva/order/terminals
+    # POST (search term in the body, not the URL) so Cloudflare's managed WAF
+    # doesn't flag the query string — a GET ?q=<city> was being 403'd on live.
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderController::terminals'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Phase 5: Migration ---
+
+ps_ppomniva_migration_preview:
+    path: /ppomniva/migration/preview
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\MigrationController::preview'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_migration_migrate:
+    path: /ppomniva/migration/migrate
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\MigrationController::migrate'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_migration_skip:
+    path: /ppomniva/migration/skip
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\MigrationController::skip'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Logs ---
+
+ps_ppomniva_log:
+    path: /ppomniva/log
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\LogController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_log_detail:
+    path: /ppomniva/log/detail
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\LogController::detail'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_log_cleanup:
+    path: /ppomniva/log/cleanup
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\LogController::cleanup'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Carriers ---
+
+ps_ppomniva_carriers:
+    path: /ppomniva/carriers
+    methods: [GET, POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\CarriersController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- COD ---
+
+ps_ppomniva_cod:
+    path: /ppomniva/cod
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\CodController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_order_states:
+    path: /ppomniva/order-states
+    methods: [GET, POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderStatesController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_cod_save:
+    path: /ppomniva/cod/save
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\CodController::save'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Orders ---
+
+ps_ppomniva_orders:
+    path: /ppomniva/orders
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\OrderListController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Manifests / Pickup queue ---
+
+ps_ppomniva_manifests:
+    path: /ppomniva/manifests
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\ManifestListController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Pickup points / Terminals ---
+
+ps_ppomniva_terminals:
+    path: /ppomniva/terminals
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\TerminalController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_terminals_sync:
+    path: /ppomniva/terminals/sync
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\TerminalController::sync'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+# --- Warehouses ---
+
+ps_ppomniva_warehouses:
+    path: /ppomniva/warehouses
+    methods: [GET]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\WarehouseController::index'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_warehouse_create:
+    path: /ppomniva/warehouses/new
+    methods: [GET, POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\WarehouseController::create'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
+ps_ppomniva_warehouse_edit:
+    path: /ppomniva/warehouses/{id}/edit
+    methods: [GET, POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\WarehouseController::edit'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+    requirements:
+        id: '\d+'
+
+ps_ppomniva_warehouse_delete:
+    path: /ppomniva/warehouses/{id}/delete
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\WarehouseController::delete'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+    requirements:
+        id: '\d+'
+
+ps_ppomniva_warehouse_set_default:
+    path: /ppomniva/warehouses/{id}/set-default
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\WarehouseController::setDefault'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+    requirements:
+        id: '\d+'

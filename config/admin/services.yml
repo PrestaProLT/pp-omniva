@@ -1,0 +1,3 @@
+# Admin-only services for the ppomniva module.
+# All services are currently declared in the main config/services.yml.
+# Add admin-scoped services here as the module grows.

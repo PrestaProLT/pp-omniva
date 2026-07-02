@@ -1,0 +1,15 @@
+{% set status = connection_status.connected is defined ? connection_status.connected : null %}
+{% set status_class = status == true ? 'connected' : (status == false ? 'disconnected' : 'unknown') %}
+<div class="prestapro-status prestapro-status--{{ status_class }}">
+    <span>
+        <span class="prestapro-status__indicator"></span>
+        <span class="prestapro-status__text">
+            {{ connection_status.message|default('Connection status unknown — click Test Connection'|trans({}, translation_domain)) }}
+        </span>
+    </span>
+    <button type="button"
+            class="prestapro-status__btn"
+            data-test-url="{{ test_connection_url }}">
+        {{ 'Test Connection'|trans({}, translation_domain) }}
+    </button>
+</div>

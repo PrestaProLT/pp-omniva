@@ -1,0 +1,117 @@
+CREATE TABLE IF NOT EXISTS `PREFIX_ppomniva_order` (
+    `id_ppomniva_order` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_cart` INT UNSIGNED NOT NULL,
+    `id_order` INT UNSIGNED NOT NULL DEFAULT 0,
+    `manifest_id` VARCHAR(40) DEFAULT NULL,
+    `service_code` VARCHAR(64) DEFAULT NULL,
+    `order_weight` DECIMAL(10,3) NOT NULL DEFAULT 0,
+    `cod_amount` DECIMAL(10,2) NOT NULL DEFAULT 0,
+    `packages` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `is_cod` TINYINT(1) NOT NULL DEFAULT 0,
+    `is_18_plus` TINYINT(1) NOT NULL DEFAULT 0,
+    `id_carrier` INT UNSIGNED NOT NULL DEFAULT 0,
+    `country_code` VARCHAR(5) NOT NULL DEFAULT '',
+    `terminal_id` VARCHAR(50) DEFAULT NULL,
+    `id_warehouse` INT UNSIGNED NOT NULL DEFAULT 0,
+    `terminal_info` TEXT DEFAULT NULL,
+    `status` VARCHAR(30) NOT NULL DEFAULT 'new',
+    `extra_fields` TEXT DEFAULT NULL,
+    `tracking_numbers` TEXT DEFAULT NULL,
+    `error` TEXT DEFAULT NULL,
+    `attempt_count` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `previous_attempts` TEXT DEFAULT NULL,
+    `date_add` DATETIME NOT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_ppomniva_order`),
+    KEY `idx_order` (`id_order`),
+    KEY `idx_cart` (`id_cart`),
+    KEY `idx_manifest` (`manifest_id`),
+    KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ppomniva_warehouse` (
+    `id_ppomniva_warehouse` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(60) NOT NULL,
+    `company_code` VARCHAR(16) NOT NULL DEFAULT '',
+    `contact` VARCHAR(40) NOT NULL DEFAULT '',
+    `country_code` VARCHAR(5) NOT NULL DEFAULT 'LT',
+    `city` VARCHAR(50) NOT NULL DEFAULT '',
+    `address` VARCHAR(255) NOT NULL DEFAULT '',
+    `zip_code` VARCHAR(10) NOT NULL DEFAULT '',
+    `phone` VARCHAR(15) NOT NULL DEFAULT '',
+    `id_shop` INT UNSIGNED NOT NULL DEFAULT 1,
+    `is_default` TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id_ppomniva_warehouse`),
+    KEY `idx_shop` (`id_shop`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ppomniva_manifest` (
+    `id_ppomniva_manifest` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `manifest_id` VARCHAR(40) NOT NULL,
+    `id_shop` INT UNSIGNED NOT NULL DEFAULT 1,
+    `id_warehouse` INT UNSIGNED NOT NULL DEFAULT 0,
+    `pickup_call_id` VARCHAR(64) DEFAULT NULL,
+    `total_weight` DECIMAL(10,3) NOT NULL DEFAULT 0,
+    `call_comment` VARCHAR(255) DEFAULT NULL,
+    `arrival_from` DATETIME DEFAULT NULL,
+    `arrival_to` DATETIME DEFAULT NULL,
+    `closed` TINYINT(1) NOT NULL DEFAULT 0,
+    `date_add` DATETIME NOT NULL,
+    PRIMARY KEY (`id_ppomniva_manifest`),
+    UNIQUE KEY `idx_manifest_id` (`manifest_id`),
+    KEY `idx_warehouse` (`id_warehouse`),
+    KEY `idx_closed` (`closed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ppomniva_log` (
+    `id_ppomniva_log` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `date_add` DATETIME NOT NULL,
+    `level` VARCHAR(16) NOT NULL DEFAULT 'error',
+    `source` VARCHAR(96) NOT NULL DEFAULT '',
+    `endpoint` VARCHAR(255) NOT NULL DEFAULT '',
+    `error_code` SMALLINT UNSIGNED DEFAULT NULL,
+    `message` TEXT NOT NULL,
+    `request_body` MEDIUMTEXT DEFAULT NULL,
+    `response_body` MEDIUMTEXT DEFAULT NULL,
+    `context` TEXT DEFAULT NULL,
+    `id_order` INT UNSIGNED NOT NULL DEFAULT 0,
+    `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id_ppomniva_log`),
+    KEY `idx_date_level` (`date_add`, `level`),
+    KEY `idx_order` (`id_order`),
+    KEY `idx_error_code` (`error_code`),
+    KEY `idx_source` (`source`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ppomniva_terminal` (
+    `id_ppomniva_terminal` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `terminal_id` VARCHAR(50) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `code` VARCHAR(20) NOT NULL DEFAULT '',
+    `display_name` VARCHAR(255) NOT NULL DEFAULT '',
+    `address` VARCHAR(255) NOT NULL DEFAULT '',
+    `city` VARCHAR(100) NOT NULL DEFAULT '',
+    `zip` VARCHAR(20) NOT NULL DEFAULT '',
+    `country_code` VARCHAR(5) NOT NULL,
+    `terminal_type` TINYINT NOT NULL DEFAULT 1,
+    `size_limit` INT NOT NULL DEFAULT 0,
+    `max_height` DECIMAL(6,3) NOT NULL DEFAULT 0,
+    `max_width` DECIMAL(6,3) NOT NULL DEFAULT 0,
+    `max_length` DECIMAL(6,3) NOT NULL DEFAULT 0,
+    `cod_enabled` TINYINT(1) NOT NULL DEFAULT 0,
+    `lat` DECIMAL(10,7) NOT NULL DEFAULT 0,
+    `lng` DECIMAL(10,7) NOT NULL DEFAULT 0,
+    `working_hours` TEXT DEFAULT NULL,
+    `date_upd` DATETIME NOT NULL,
+    PRIMARY KEY (`id_ppomniva_terminal`),
+    UNIQUE KEY `idx_terminal` (`terminal_id`, `country_code`),
+    KEY `idx_country` (`country_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_ppomniva_18_plus_product` (
+    `id_ppomniva_18_plus_product` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_product` INT UNSIGNED NOT NULL,
+    `is_18_plus` TINYINT(1) NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id_ppomniva_18_plus_product`),
+    UNIQUE KEY `idx_product` (`id_product`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

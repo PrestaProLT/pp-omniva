@@ -1,0 +1,246 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+{{ include('@Modules/ppomniva/views/templates/admin/partials/_admin_menu.html.twig', {
+    active_tab: 'manifests',
+    page_title: 'Manifests & pickup queue'|trans({}, 'Modules.Ppomniva.Admin'),
+    page_description: 'Daily flow: orders earn labels, labels group into a manifest, the manifest is closed when the courier picks the parcels up. This page lists what is waiting and what is in progress.'|trans({}, 'Modules.Ppomniva.Admin'),
+    multistore_blocked: multistore_blocked,
+}) }}
+
+{% if not multistore_blocked %}
+<div class="ppo-shell">
+
+{# 1. Open manifests #}
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ 'Open manifests'|trans({}, 'Modules.Ppomniva.Admin') }} <span class="ppo-badge">{{ open_manifests|length }}</span></h3>
+        <span class="ppo-card__help">{{ 'A manifest stays open until the courier picks the parcels up. Print the manifest PDF and book a courier from the order page.'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+    </div>
+    <div class="ppo-card__body">
+        {% if open_manifests|length == 0 %}
+            <div class="ppo-empty">
+                <p class="ppo-empty__body">{{ 'No open manifests right now.'|trans({}, 'Modules.Ppomniva.Admin') }}</p>
+            </div>
+        {% else %}
+            <table class="ppo-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'Manifest'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Created'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Warehouse'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Orders'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'COD'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Total weight'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Courier window'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Status'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in open_manifests %}
+                        <tr id="manifest-{{ m.manifest_id }}">
+                            <td><code>{{ m.manifest_id }}</code></td>
+                            <td><small>{{ m.date_add }}</small></td>
+                            <td>{{ m.warehouse_name|default('—') }}</td>
+                            <td>{{ m.order_count }}</td>
+                            <td>{% if m.cod_count > 0 %}{{ m.cod_count }}{% else %}—{% endif %}</td>
+                            <td>{{ m.total_weight }} kg</td>
+                            <td>
+                                {% if m.arrival_from and m.arrival_to %}
+                                    <span class="ppo-badge ppo-badge--info">{{ m.arrival_from|slice(11, 5) }}–{{ m.arrival_to|slice(11, 5) }}</span>
+                                    {% if m.call_comment %}<br><small style="color: var(--ppo-text-muted);">{{ m.call_comment }}</small>{% endif %}
+                                {% else %}
+                                    <small style="color: var(--ppo-text-muted);">{{ 'Courier not booked'|trans({}, 'Modules.Ppomniva.Admin') }}</small>
+                                {% endif %}
+                            </td>
+                            <td><span class="ppo-badge ppo-badge--warn">{{ 'Open'|trans({}, 'Modules.Ppomniva.Admin') }}</span></td>
+                            <td class="ppo-row-actions">
+                                <a class="btn btn-secondary" href="{{ path('ps_ppomniva_print_manifest', { manifest_id: m.manifest_id }) }}" target="_blank">{{ 'Print'|trans({}, 'Modules.Ppomniva.Admin') }}</a>
+                                {% if not (m.arrival_from and m.arrival_to) %}
+                                    <button type="button"
+                                            class="btn btn-info"
+                                            data-action="call-courier"
+                                            data-manifest-id="{{ m.manifest_id }}">
+                                        {{ 'Call Courier'|trans({}, 'Modules.Ppomniva.Admin') }}
+                                    </button>
+                                {% endif %}
+                                <button type="button"
+                                        class="btn btn-warning"
+                                        data-action="close-manifest"
+                                        data-manifest-id="{{ m.manifest_id }}">
+                                    {{ 'Close Manifest'|trans({}, 'Modules.Ppomniva.Admin') }}
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+
+{# Call Courier modal — single shared form, populated with the active
+   manifest_id when the user clicks the row's Call Courier button. #}
+<div id="ppo-courier-modal" class="ppo-modal" style="display: none;" role="dialog" aria-modal="true">
+    <div class="ppo-modal__backdrop" data-action="close-courier-modal"></div>
+    <div class="ppo-modal__panel" role="document">
+        <header class="ppo-modal__header">
+            <h3 class="ppo-modal__title">{{ 'Request courier pickup'|trans({}, 'Modules.Ppomniva.Admin') }}</h3>
+            <button type="button" class="ppo-modal__close" data-action="close-courier-modal" aria-label="Close">&times;</button>
+        </header>
+        <div class="ppo-modal__body">
+            <p class="ppo-modal__hint">
+                {{ 'Choose a 2-hour pickup window. Same-day requests must be sent before 15:00 — book for tomorrow if you are past the cutoff.'|trans({}, 'Modules.Ppomniva.Admin') }}
+            </p>
+            <div class="ppo-modal__row">
+                <label for="ppo-courier-manifest">{{ 'Manifest'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <code id="ppo-courier-manifest"></code>
+            </div>
+            <div class="ppo-modal__row">
+                <label for="ppo-courier-date">{{ 'Pickup date'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <input type="date"
+                       id="ppo-courier-date"
+                       class="form-control form-control-sm"
+                       min="{{ 'now'|date('Y-m-d') }}">
+            </div>
+            <div class="ppo-modal__row">
+                <label for="ppo-courier-from">{{ 'From'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <select id="ppo-courier-from" class="form-control form-control-sm">
+                    {% for h in range(8, 20) %}
+                        <option value="{{ h }}">{{ '%02d'|format(h) }}:00</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="ppo-modal__row">
+                <label for="ppo-courier-to">{{ 'To'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <select id="ppo-courier-to" class="form-control form-control-sm">
+                    {% for h in range(10, 22) %}
+                        <option value="{{ h }}" {{ h == 17 ? 'selected' : '' }}>{{ '%02d'|format(h) }}:00</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="ppo-modal__row">
+                <label for="ppo-courier-comment">{{ 'Comment'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <input type="text"
+                       id="ppo-courier-comment"
+                       class="form-control form-control-sm"
+                       maxlength="50"
+                       placeholder="{{ 'Max 50 characters'|trans({}, 'Modules.Ppomniva.Admin') }}">
+            </div>
+        </div>
+        <footer class="ppo-modal__footer">
+            <button type="button" class="btn btn-secondary" data-action="close-courier-modal">
+                {{ 'Cancel'|trans({}, 'Modules.Ppomniva.Admin') }}
+            </button>
+            <button type="button" class="btn btn-primary" data-action="submit-courier">
+                {{ 'Send Request'|trans({}, 'Modules.Ppomniva.Admin') }}
+            </button>
+        </footer>
+    </div>
+</div>
+
+<div id="ppo-manifests-notice"></div>
+
+<script>
+    window.ppvManifestsConfig = {
+        urls: {
+            close: {{ path('ps_ppomniva_close_manifest')|json_encode|raw }},
+            callCourier: {{ path('ps_ppomniva_call_courier')|json_encode|raw }}
+        }
+    };
+</script>
+<script src="/modules/ppomniva/views/js/admin/manifests.js?v=1" defer></script>
+
+{# 2. Recently closed #}
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ 'Recently closed manifests'|trans({}, 'Modules.Ppomniva.Admin') }} <span class="ppo-badge ppo-badge--success">{{ closed_manifests|length }}</span></h3>
+        <span class="ppo-card__help">{{ 'History of completed pickups (latest 30). Useful for reconciling Omniva invoices with PrestaShop orders.'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+    </div>
+    <div class="ppo-card__body">
+        {% if closed_manifests|length == 0 %}
+            <div class="ppo-empty">
+                <p class="ppo-empty__body">{{ 'No closed manifests yet.'|trans({}, 'Modules.Ppomniva.Admin') }}</p>
+            </div>
+        {% else %}
+            <table class="ppo-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'Manifest'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Closed'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Warehouse'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Orders'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'COD'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Total weight'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in closed_manifests %}
+                        <tr id="manifest-{{ m.manifest_id }}">
+                            <td><code>{{ m.manifest_id }}</code></td>
+                            <td><small>{{ m.date_add }}</small></td>
+                            <td>{{ m.warehouse_name|default('—') }}</td>
+                            <td>{{ m.order_count }}</td>
+                            <td>{% if m.cod_count > 0 %}{{ m.cod_count }}{% else %}—{% endif %}</td>
+                            <td>{{ m.total_weight }} kg</td>
+                            <td class="ppo-row-actions">
+                                <a class="btn btn-secondary" href="{{ path('ps_ppomniva_print_manifest', { manifest_id: m.manifest_id }) }}" target="_blank">{{ 'Print'|trans({}, 'Modules.Ppomniva.Admin') }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+
+{# 3. Labels awaiting manifest — diagnostic widget. Surfaces orders that
+   have tracking numbers but ended up without a manifest_id (a rare error
+   state; with the current code it should always read 0). Kept at the
+   bottom because it's not part of the day-to-day flow. #}
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ 'Labels awaiting manifest'|trans({}, 'Modules.Ppomniva.Admin') }} <span class="ppo-badge ppo-badge--warn">{{ awaiting_manifest|length }}</span></h3>
+        <span class="ppo-card__help">{{ 'These orders have tracking numbers from Omniva but are not yet on a manifest. Re-run label generation on the order to attach them, or check the per-order error message if the previous attempt failed.'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+    </div>
+    <div class="ppo-card__body">
+        {% if awaiting_manifest|length == 0 %}
+            <div class="ppo-empty">
+                <p class="ppo-empty__body">{{ 'Every label is attached to a manifest.'|trans({}, 'Modules.Ppomniva.Admin') }}</p>
+            </div>
+        {% else %}
+            <table class="ppo-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'Order'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Date'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Country'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Tracking'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Weight'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in awaiting_manifest %}
+                        <tr>
+                            <td><a href="{{ path('admin_orders_view', { orderId: o.id_order }) }}">{{ o.ps_reference|default('#' ~ o.id_order) }}</a></td>
+                            <td><small>{{ o.date_add }}</small></td>
+                            <td>{{ o.country_code }}</td>
+                            <td>{% for tn in o._tracking %}<code>{{ tn }}</code>{% if not loop.last %} {% endif %}{% endfor %}</td>
+                            <td>{{ o.order_weight }} kg</td>
+                            <td class="ppo-row-actions">
+                                <a class="btn btn-secondary" href="{{ path('admin_orders_view', { orderId: o.id_order }) }}">{{ 'Open order'|trans({}, 'Modules.Ppomniva.Admin') }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+
+</div>
+{% endif %}
+{% endblock %}

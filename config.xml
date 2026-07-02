@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>ppomniva</name>
+    <displayName><![CDATA[PrestaPro &mdash; Omniva]]></displayName>
+    <version><![CDATA[1.0.0]]></version>
+    <description><![CDATA[Omniva courier and parcel-machine shipping integration for PrestaShop.]]></description>
+    <author><![CDATA[PrestaPro]]></author><author_uri><![CDATA[https://prestapro.lt/modules/ppomniva]]></author_uri>
+    <tab><![CDATA[shipping_logistics]]></tab>
+    <confirmUninstall><![CDATA[Are you sure you want to uninstall this module?]]></confirmUninstall>
+    <is_configurable>1</is_configurable>
+    <need_instance>0</need_instance>
+</module>

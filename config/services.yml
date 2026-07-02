@@ -1,0 +1,74 @@
+services:
+    _defaults:
+        public: true
+        autowire: true
+        autoconfigure: true
+
+    PrestaShop\Module\PPOmniva\:
+        resource: '../src/'
+        exclude: '../src/{Api,Carrier,Entity,Form,Hooks,Module}'
+
+    # --- Form Type ---
+
+    prestashop.module.ppomniva.form.configuration_type:
+        class: 'PrestaShop\Module\PPOmniva\Form\ConfigurationFormType'
+        parent: 'form.type.translatable.aware'
+        tags:
+            - { name: form.type }
+
+    # --- Form Data Provider ---
+
+    prestashop.module.ppomniva.form.configuration_data_provider:
+        class: 'PrestaShop\Module\PPOmniva\Form\ConfigurationFormDataProvider'
+
+    # --- Form Handler ---
+
+    prestashop.module.ppomniva.form.configuration_handler:
+        class: 'PrestaShop\PrestaShop\Core\Form\Handler'
+        arguments:
+            - '@form.factory'
+            - '@prestashop.core.hook.dispatcher'
+            - '@prestashop.module.ppomniva.form.configuration_data_provider'
+            - 'PrestaShop\Module\PPOmniva\Form\ConfigurationFormType'
+            - 'PpOmnivaConfiguration'
+
+
+    # --- Carriers form ---
+
+    prestashop.module.ppomniva.form.carrier_type:
+        class: 'PrestaShop\Module\PPOmniva\Form\CarrierFormType'
+        parent: 'form.type.translatable.aware'
+        tags:
+            - { name: form.type }
+
+    prestashop.module.ppomniva.form.carrier_data_provider:
+        class: 'PrestaShop\Module\PPOmniva\Form\CarrierFormDataProvider'
+
+    prestashop.module.ppomniva.form.carrier_handler:
+        class: 'PrestaShop\PrestaShop\Core\Form\Handler'
+        arguments:
+            - '@form.factory'
+            - '@prestashop.core.hook.dispatcher'
+            - '@prestashop.module.ppomniva.form.carrier_data_provider'
+            - 'PrestaShop\Module\PPOmniva\Form\CarrierFormType'
+            - 'PpOmnivaCarrier'
+
+    # --- Order states form (Omniva pack_status -> PS order state mapping) ---
+
+    prestashop.module.ppomniva.form.order_states_type:
+        class: 'PrestaShop\Module\PPOmniva\Form\OrderStatesFormType'
+        parent: 'form.type.translatable.aware'
+        tags:
+            - { name: form.type }
+
+    prestashop.module.ppomniva.form.order_states_data_provider:
+        class: 'PrestaShop\Module\PPOmniva\Form\OrderStatesFormDataProvider'
+
+    prestashop.module.ppomniva.form.order_states_handler:
+        class: 'PrestaShop\PrestaShop\Core\Form\Handler'
+        arguments:
+            - '@form.factory'
+            - '@prestashop.core.hook.dispatcher'
+            - '@prestashop.module.ppomniva.form.order_states_data_provider'
+            - 'PrestaShop\Module\PPOmniva\Form\OrderStatesFormType'
+            - 'PpOmnivaOrderStates'

@@ -1,0 +1,144 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+{% set page_actions %}
+    <form method="post" action="{{ sync_url }}" data-ppo-loading style="display:inline;">
+        <input type="hidden" name="country" value="ALL">
+        <button type="submit" class="btn btn-primary">{{ 'Sync all countries'|trans({}, 'Modules.Ppomniva.Admin') }}</button>
+    </form>
+{% endset %}
+
+{{ include('@Modules/ppomniva/views/templates/admin/partials/_admin_menu.html.twig', {
+    active_tab: 'terminals',
+    page_title: 'Pickup points'|trans({}, 'Modules.Ppomniva.Admin'),
+    page_description: 'Browse the locker and pickup-point cache used at checkout. Sync per country to refresh from the Omniva API.'|trans({}, 'Modules.Ppomniva.Admin'),
+    multistore_blocked: multistore_blocked,
+    page_actions: page_actions,
+}) }}
+
+{% if not multistore_blocked %}
+<div class="ppo-shell">
+
+<section class="ppo-stat-grid">
+    {% for cc, s in stats %}
+        {% set tile_modifier = '' %}
+        {% if not s.last_sync %}{% set tile_modifier = 'ppo-stat--danger' %}
+        {% elseif s.stale %}{% set tile_modifier = 'ppo-stat--warn' %}
+        {% endif %}
+        <form method="post" action="{{ sync_url }}" data-ppo-loading class="ppo-stat {{ tile_modifier }}" style="text-align: left;">
+            <input type="hidden" name="country" value="{{ cc }}">
+            <p class="ppo-stat__label">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+                {{ cc }}
+            </p>
+            <p class="ppo-stat__count">{{ s.total }}</p>
+            <p class="ppo-stat__detail">
+                {% if s.last_sync %}
+                    {{ 'Last synced %date%'|trans({'%date%': s.last_sync}, 'Modules.Ppomniva.Admin') }}
+                    {% if s.stale %} · <strong>{{ 'stale'|trans({}, 'Modules.Ppomniva.Admin') }}</strong>{% endif %}
+                {% else %}
+                    {{ 'Never synced'|trans({}, 'Modules.Ppomniva.Admin') }}
+                {% endif %}
+            </p>
+            <div style="display: flex; gap: var(--ppo-space-1); margin-top: var(--ppo-space-2);">
+                <a class="btn btn-secondary btn-sm" href="{{ path('ps_ppomniva_terminals', {country: cc}) }}" onclick="event.stopPropagation();">{{ 'View'|trans({}, 'Modules.Ppomniva.Admin') }}</a>
+                <button type="submit" class="btn btn-primary btn-sm">{{ 'Sync %cc%'|trans({'%cc%': cc}, 'Modules.Ppomniva.Admin') }}</button>
+            </div>
+        </form>
+    {% endfor %}
+</section>
+
+<div class="ppo-card">
+    <div class="ppo-card__header">
+        <h3 class="ppo-card__title">{{ '%cc% pickup points'|trans({'%cc%': active_country}, 'Modules.Ppomniva.Admin') }}</h3>
+        <span class="ppo-card__help">{{ 'Lockers accept 1 package per shipment; parcel shops up to 5. Use the COD filter to find points that accept cash on delivery.'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+    </div>
+    <div class="ppo-card__body">
+        <form method="get" action="{{ index_url }}" class="ppo-filters">
+            <input type="hidden" name="_token" value="{{ app.request.query.get('_token')|default('') }}">
+            <input type="hidden" name="country" value="{{ active_country }}">
+            <div class="form-group ppo-filters__search">
+                <label>{{ 'Search (name, code, city, address, zip)'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <input type="text" name="q" value="{{ filters.q }}">
+            </div>
+            <div class="form-group">
+                <label>{{ 'Type'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <select name="type">
+                    <option value="">{{ 'Any'|trans({}, 'Modules.Ppomniva.Admin') }}</option>
+                    <option value="shop"{% if filters.type == 'shop' %} selected{% endif %}>{{ 'Parcel shop'|trans({}, 'Modules.Ppomniva.Admin') }}</option>
+                    <option value="locker"{% if filters.type == 'locker' %} selected{% endif %}>{{ 'Locker'|trans({}, 'Modules.Ppomniva.Admin') }}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>{{ 'COD'|trans({}, 'Modules.Ppomniva.Admin') }}</label>
+                <select name="cod">
+                    <option value="">{{ 'Any'|trans({}, 'Modules.Ppomniva.Admin') }}</option>
+                    <option value="1"{% if filters.cod == '1' %} selected{% endif %}>{{ 'Accepts COD'|trans({}, 'Modules.Ppomniva.Admin') }}</option>
+                    <option value="0"{% if filters.cod == '0' %} selected{% endif %}>{{ 'No COD'|trans({}, 'Modules.Ppomniva.Admin') }}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">{{ 'Filter'|trans({}, 'Modules.Ppomniva.Admin') }}</button>
+                <a class="btn btn-secondary" href="{{ path('ps_ppomniva_terminals', {country: active_country}) }}">{{ 'Reset'|trans({}, 'Modules.Ppomniva.Admin') }}</a>
+            </div>
+        </form>
+
+        {% if terminals|length == 0 %}
+            <div class="ppo-empty">
+                <h4 class="ppo-empty__title">{{ 'No pickup points to show'|trans({}, 'Modules.Ppomniva.Admin') }}</h4>
+                <p class="ppo-empty__body">
+                    {% if filters.q or filters.type or filters.cod %}
+                        {{ 'No results match your filters. Reset filters or try another country.'|trans({}, 'Modules.Ppomniva.Admin') }}
+                    {% else %}
+                        {{ 'Click the “Sync %cc%” button above to fetch the latest pickup points from Omniva.'|trans({'%cc%': active_country}, 'Modules.Ppomniva.Admin') }}
+                    {% endif %}
+                </p>
+            </div>
+        {% else %}
+            <p style="color: var(--ppo-text-muted); margin: 0 0 var(--ppo-space-2);">{{ 'Showing %count% pickup points (max 500)'|trans({'%count%': terminals|length}, 'Modules.Ppomniva.Admin') }}</p>
+            <table class="ppo-table">
+                <thead>
+                    <tr>
+                        <th>{{ 'Code'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Type'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Name'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'City'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Address'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'ZIP'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'Limits'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                        <th>{{ 'COD'|trans({}, 'Modules.Ppomniva.Admin') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in terminals %}
+                        <tr>
+                            <td><code>{{ t.code }}</code></td>
+                            <td>
+                                {% if t.terminal_type == 3 %}
+                                    <span class="ppo-badge ppo-badge--info">{{ 'Locker'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+                                {% else %}
+                                    <span class="ppo-badge ppo-badge--warn">{{ 'Shop'|trans({}, 'Modules.Ppomniva.Admin') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ t.display_name|default(t.name) }}</td>
+                            <td>{{ t.city }}</td>
+                            <td>{{ t.address }}</td>
+                            <td>{{ t.zip }}</td>
+                            <td>
+                                {% if t.size_limit > 0 %}{{ t.size_limit }} kg{% else %}—{% endif %}
+                                {% if t.max_height > 0 or t.max_width > 0 or t.max_length > 0 %}
+                                    <br><small style="color: var(--ppo-text-muted);">{{ t.max_length }}×{{ t.max_width }}×{{ t.max_height }} m</small>
+                                {% endif %}
+                            </td>
+                            <td>{% if t.cod_enabled %}<span class="ppo-badge ppo-badge--success">{{ 'Yes'|trans({}, 'Modules.Ppomniva.Admin') }}</span>{% else %}—{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+
+</div>
+{% endif %}
+{% endblock %}

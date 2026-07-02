@@ -1,0 +1,1006 @@
+/*
+ * PPOmniva admin design system.
+ *
+ * All admin pages share this stylesheet. The design tokens (colors, spacing,
+ * typography, radii) live in the :root scope so individual components stay
+ * consistent. Dark-mode overrides are scoped to .ppo-shell so we don't fight
+ * the surrounding PrestaShop admin chrome.
+ */
+
+:root {
+    /* Brand */
+    --ppo-c-primary: #2a72d4;
+    --ppo-c-primary-hover: #1d5a96;
+    --ppo-c-primary-bg: #e7f1fb;
+    --ppo-c-primary-border: #b9d3ec;
+
+    /* Status palette */
+    --ppo-c-success: #1f6c39;
+    --ppo-c-success-bg: #e6f4ec;
+    --ppo-c-warn: #8a6800;
+    --ppo-c-warn-bg: #fff4dd;
+    --ppo-c-warn-border: #f0c674;
+    --ppo-c-danger: #b32424;
+    --ppo-c-danger-bg: #fbeaea;
+    --ppo-c-danger-border: #e8a3a3;
+    --ppo-c-info: #1d5a96;
+    --ppo-c-info-bg: #e7f1fb;
+    --ppo-c-neutral: #555;
+    --ppo-c-neutral-bg: #f0f0f0;
+
+    /* Surfaces */
+    --ppo-bg-page: #fafbfc;
+    --ppo-bg-card: #ffffff;
+    --ppo-bg-subtle: #f6f7f9;
+    --ppo-bg-hover: #fafbfc;
+
+    /* Text */
+    --ppo-text-primary: #1d2d3a;
+    --ppo-text-secondary: #4a4a4a;
+    --ppo-text-muted: #6b7280;
+
+    /* Borders */
+    --ppo-border: #e6e6e6;
+    --ppo-border-strong: #d8dde2;
+    --ppo-border-subtle: #eef0f2;
+
+    /* Spacing scale */
+    --ppo-space-1: 4px;
+    --ppo-space-2: 8px;
+    --ppo-space-3: 12px;
+    --ppo-space-4: 16px;
+    --ppo-space-5: 20px;
+    --ppo-space-6: 24px;
+    --ppo-space-8: 32px;
+    --ppo-space-12: 48px;
+
+    /* Typography */
+    --ppo-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --ppo-text-xs: 11px;
+    --ppo-text-sm: 12px;
+    --ppo-text-base: 13px;
+    --ppo-text-md: 14px;
+    --ppo-text-lg: 16px;
+    --ppo-text-xl: 22px;
+
+    /* Geometry */
+    --ppo-radius-sm: 3px;
+    --ppo-radius-md: 4px;
+    --ppo-radius-lg: 6px;
+    --ppo-radius-pill: 12px;
+    --ppo-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --ppo-shadow-card: 0 0 0 1px var(--ppo-border);
+    --ppo-shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* Animation */
+    --ppo-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --ppo-duration: 150ms;
+}
+
+@media (prefers-color-scheme: dark) {
+    .ppo-shell {
+        --ppo-bg-page: #14181c;
+        --ppo-bg-card: #1f242a;
+        --ppo-bg-subtle: #232932;
+        --ppo-bg-hover: #2a313a;
+        --ppo-text-primary: #e6eaf0;
+        --ppo-text-secondary: #c0c6cf;
+        --ppo-text-muted: #8d96a3;
+        --ppo-border: #2d343d;
+        --ppo-border-strong: #3a424d;
+        --ppo-border-subtle: #252b33;
+    }
+}
+
+/* ----- Shell + page header ----------------------------------------------- */
+
+.ppo-shell {
+    font-size: var(--ppo-text-md);
+    color: var(--ppo-text-primary);
+}
+
+.ppo-shell *,
+.ppo-shell *::before,
+.ppo-shell *::after {
+    box-sizing: border-box;
+}
+
+.ppo-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ppo-space-3);
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: var(--ppo-space-5) 0 var(--ppo-space-3);
+    border-bottom: 1px solid var(--ppo-border-subtle);
+    margin-bottom: var(--ppo-space-5);
+}
+
+.ppo-page-header__title {
+    margin: 0 0 var(--ppo-space-1);
+    font-size: var(--ppo-text-xl);
+    font-weight: 600;
+    color: var(--ppo-text-primary);
+}
+
+.ppo-page-header__description {
+    margin: 0;
+    color: var(--ppo-text-muted);
+    max-width: 720px;
+}
+
+.ppo-page-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ppo-space-2);
+    align-items: center;
+}
+
+/* ----- Tab navigation ---------------------------------------------------- */
+
+.ppo-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--ppo-border-strong);
+    margin: 0 calc(var(--ppo-space-2) * -1);
+    padding: 0 var(--ppo-space-2);
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+}
+
+.ppo-tabs__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ppo-space-2);
+    padding: var(--ppo-space-3) var(--ppo-space-4);
+    border-bottom: 2px solid transparent;
+    color: var(--ppo-text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    white-space: nowrap;
+    scroll-snap-align: start;
+    transition: color var(--ppo-duration) var(--ppo-ease),
+                border-color var(--ppo-duration) var(--ppo-ease),
+                background-color var(--ppo-duration) var(--ppo-ease);
+}
+
+.ppo-tabs__item:hover {
+    color: var(--ppo-text-primary);
+    text-decoration: none;
+    background: var(--ppo-bg-hover);
+}
+
+.ppo-tabs__item--active {
+    color: var(--ppo-c-primary);
+    border-bottom-color: var(--ppo-c-primary);
+    font-weight: 600;
+}
+
+.ppo-tabs__icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+.ppo-tabs__item--active .ppo-tabs__icon {
+    opacity: 1;
+}
+
+@media (max-width: 720px) {
+    .ppo-tabs {
+        font-size: var(--ppo-text-base);
+    }
+    .ppo-tabs__item {
+        padding: var(--ppo-space-2) var(--ppo-space-3);
+    }
+}
+
+/* ----- Cards ------------------------------------------------------------- */
+
+.ppo-card {
+    background: var(--ppo-bg-card);
+    border: 1px solid var(--ppo-border);
+    border-radius: var(--ppo-radius-md);
+    margin-bottom: var(--ppo-space-4);
+    overflow: hidden;
+}
+
+.ppo-card__header {
+    padding: var(--ppo-space-3) var(--ppo-space-4);
+    border-bottom: 1px solid var(--ppo-border-subtle);
+    background: var(--ppo-bg-subtle);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ppo-space-2);
+}
+
+.ppo-card__title {
+    margin: 0;
+    font-size: var(--ppo-text-md);
+    font-weight: 600;
+    color: var(--ppo-text-primary);
+}
+
+.ppo-card__help {
+    color: var(--ppo-text-muted);
+    font-weight: 400;
+    font-size: var(--ppo-text-sm);
+}
+
+.ppo-card__body {
+    padding: var(--ppo-space-4);
+}
+
+.ppo-card__footer {
+    padding: var(--ppo-space-3) var(--ppo-space-4);
+    border-top: 1px solid var(--ppo-border-subtle);
+    background: var(--ppo-bg-subtle);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ppo-space-2);
+    justify-content: flex-end;
+}
+
+/* ----- Tables ------------------------------------------------------------ */
+
+.ppo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--ppo-text-base);
+    background: var(--ppo-bg-card);
+}
+
+.ppo-table th,
+.ppo-table td {
+    padding: var(--ppo-space-2) var(--ppo-space-3);
+    border-bottom: 1px solid var(--ppo-border-subtle);
+    text-align: left;
+    vertical-align: top;
+}
+
+.ppo-table th {
+    background: var(--ppo-bg-subtle);
+    font-weight: 600;
+    color: var(--ppo-text-secondary);
+}
+
+.ppo-table tbody tr:hover {
+    background: var(--ppo-bg-hover);
+}
+
+.ppo-table tbody tr.is-clickable {
+    cursor: pointer;
+}
+
+/* Soft pulse when a row is the URL fragment target — used when arriving from
+   the order panel "Manifest" link so the merchant spots the right row. */
+.ppo-table tbody tr:target {
+    animation: ppo-target-pulse 2.5s ease-out 1;
+    background: var(--ppo-bg-hover);
+}
+
+@keyframes ppo-target-pulse {
+    0%   { background: rgba(245, 197, 24, 0.55); }
+    60%  { background: rgba(245, 197, 24, 0.18); }
+    100% { background: var(--ppo-bg-hover); }
+}
+
+.ppo-table code {
+    font-family: var(--ppo-font-mono);
+    font-size: 11px;
+    background: var(--ppo-bg-subtle);
+    padding: 1px var(--ppo-space-1);
+    border-radius: var(--ppo-radius-sm);
+}
+
+/* ----- Status badges ----------------------------------------------------- */
+
+.ppo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ppo-space-1);
+    padding: 2px var(--ppo-space-2);
+    border-radius: var(--ppo-radius-pill);
+    font-size: var(--ppo-text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+    background: var(--ppo-c-neutral-bg);
+    color: var(--ppo-c-neutral);
+    white-space: nowrap;
+}
+
+.ppo-badge--success { background: var(--ppo-c-success-bg); color: var(--ppo-c-success); }
+.ppo-badge--warn    { background: var(--ppo-c-warn-bg);    color: var(--ppo-c-warn);    }
+.ppo-badge--danger  { background: var(--ppo-c-danger-bg);  color: var(--ppo-c-danger);  }
+.ppo-badge--info    { background: var(--ppo-c-info-bg);    color: var(--ppo-c-info);    }
+.ppo-badge--primary { background: var(--ppo-c-primary);    color: #fff;                 }
+
+/* ----- Filter pills ------------------------------------------------------ */
+
+.ppo-pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ppo-space-1);
+    margin-bottom: var(--ppo-space-3);
+}
+
+.ppo-pill {
+    background: var(--ppo-bg-subtle);
+    color: var(--ppo-text-primary);
+    border-radius: var(--ppo-radius-pill);
+    padding: 4px var(--ppo-space-3);
+    font-size: var(--ppo-text-sm);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color var(--ppo-duration) var(--ppo-ease);
+}
+
+.ppo-pill:hover {
+    background: var(--ppo-border-subtle);
+    text-decoration: none;
+}
+
+.ppo-pill--active {
+    background: var(--ppo-c-primary);
+    color: #fff;
+}
+
+.ppo-pill--active:hover {
+    background: var(--ppo-c-primary-hover);
+    color: #fff;
+}
+
+.ppo-pill--danger {
+    background: var(--ppo-c-danger-bg);
+    color: var(--ppo-c-danger);
+}
+
+.ppo-pill--danger.ppo-pill--active {
+    background: var(--ppo-c-danger);
+    color: #fff;
+}
+
+.ppo-pill__count {
+    opacity: 0.7;
+    margin-left: var(--ppo-space-1);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ----- Stat tiles (Dashboard) ------------------------------------------- */
+
+.ppo-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--ppo-space-3);
+    margin-bottom: var(--ppo-space-5);
+}
+
+.ppo-stat {
+    background: var(--ppo-bg-card);
+    border: 1px solid var(--ppo-border);
+    border-radius: var(--ppo-radius-md);
+    padding: var(--ppo-space-4);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color var(--ppo-duration) var(--ppo-ease),
+                box-shadow var(--ppo-duration) var(--ppo-ease),
+                transform var(--ppo-duration) var(--ppo-ease);
+}
+
+.ppo-stat:hover {
+    border-color: var(--ppo-c-primary-border);
+    box-shadow: var(--ppo-shadow-lift);
+    text-decoration: none;
+    color: inherit;
+    transform: translateY(-1px);
+}
+
+.ppo-stat__label {
+    font-size: var(--ppo-text-sm);
+    color: var(--ppo-text-muted);
+    margin: 0 0 var(--ppo-space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--ppo-space-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+
+.ppo-stat__count {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ppo-text-primary);
+    margin: 0;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.ppo-stat__detail {
+    font-size: var(--ppo-text-sm);
+    color: var(--ppo-text-muted);
+    margin: var(--ppo-space-2) 0 0;
+}
+
+.ppo-stat--success .ppo-stat__count { color: var(--ppo-c-success); }
+.ppo-stat--warn    .ppo-stat__count { color: var(--ppo-c-warn);    }
+.ppo-stat--danger  .ppo-stat__count { color: var(--ppo-c-danger);  }
+
+/* Country freshness sub-tiles inside a stat */
+.ppo-freshness {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ppo-space-2);
+    margin-top: var(--ppo-space-2);
+}
+
+.ppo-freshness__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--ppo-text-xs);
+    font-weight: 600;
+    color: var(--ppo-text-muted);
+}
+
+.ppo-freshness__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ppo-c-success);
+}
+
+.ppo-freshness__dot--warn   { background: var(--ppo-c-warn);   }
+.ppo-freshness__dot--danger { background: var(--ppo-c-danger); }
+.ppo-freshness__dot--empty  { background: var(--ppo-border-strong); }
+
+/* ----- Forms ------------------------------------------------------------- */
+
+.ppo-form .form-group {
+    margin: 0 0 var(--ppo-space-3);
+}
+
+.ppo-form label {
+    display: block;
+    font-size: var(--ppo-text-base);
+    font-weight: 600;
+    color: var(--ppo-text-primary);
+    margin-bottom: var(--ppo-space-1);
+}
+
+.ppo-form small.text-muted {
+    display: block;
+    font-size: var(--ppo-text-sm);
+    color: var(--ppo-text-muted);
+    margin-top: var(--ppo-space-1);
+}
+
+.ppo-form input[type="text"],
+.ppo-form input[type="number"],
+.ppo-form input[type="date"],
+.ppo-form input[type="email"],
+.ppo-form input[type="tel"],
+.ppo-form select {
+    width: 100%;
+    padding: var(--ppo-space-2) var(--ppo-space-3);
+    border: 1px solid var(--ppo-border-strong);
+    border-radius: var(--ppo-radius-sm);
+    font-size: var(--ppo-text-base);
+    background: var(--ppo-bg-card);
+    color: var(--ppo-text-primary);
+}
+
+.ppo-form input:focus,
+.ppo-form select:focus {
+    outline: none;
+    border-color: var(--ppo-c-primary);
+    box-shadow: 0 0 0 2px var(--ppo-c-primary-bg);
+}
+
+.ppo-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ppo-space-3);
+}
+
+@media (max-width: 720px) {
+    .ppo-form-row { grid-template-columns: 1fr; }
+}
+
+.ppo-form-actions {
+    display: flex;
+    gap: var(--ppo-space-2);
+    align-items: center;
+    margin-top: var(--ppo-space-4);
+    flex-wrap: wrap;
+}
+
+/* ----- Filter row (compact horizontal form) ----------------------------- */
+
+.ppo-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ppo-space-2);
+    align-items: end;
+    margin-bottom: var(--ppo-space-3);
+}
+
+.ppo-filters .form-group {
+    margin: 0;
+}
+
+.ppo-filters label {
+    display: block;
+    font-size: var(--ppo-text-xs);
+    color: var(--ppo-text-muted);
+    margin-bottom: 2px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ppo-filters input,
+.ppo-filters select {
+    font-size: var(--ppo-text-base);
+    padding: var(--ppo-space-1) var(--ppo-space-2);
+    border: 1px solid var(--ppo-border-strong);
+    border-radius: var(--ppo-radius-sm);
+    background: var(--ppo-bg-card);
+    color: var(--ppo-text-primary);
+}
+
+.ppo-filters .ppo-filters__search {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* ----- Empty state ------------------------------------------------------- */
+
+.ppo-empty {
+    background: var(--ppo-bg-subtle);
+    border: 1px dashed var(--ppo-border-strong);
+    border-radius: var(--ppo-radius-md);
+    padding: var(--ppo-space-3) var(--ppo-space-4);
+    text-align: center;
+    color: var(--ppo-text-muted);
+}
+
+.ppo-empty__title {
+    font-size: var(--ppo-text-sm);
+    font-weight: 600;
+    color: var(--ppo-text-primary);
+    margin: 0 0 2px;
+}
+
+.ppo-empty__body {
+    margin: 0 auto;
+    max-width: 480px;
+    font-size: var(--ppo-text-sm);
+    line-height: 1.4;
+}
+
+/* ----- Connection / system status banner -------------------------------- */
+
+.ppo-status {
+    display: flex;
+    align-items: center;
+    gap: var(--ppo-space-2);
+    padding: var(--ppo-space-2) var(--ppo-space-4);
+    border-radius: var(--ppo-radius-md);
+    margin-bottom: var(--ppo-space-3);
+    font-size: var(--ppo-text-base);
+    background: var(--ppo-c-neutral-bg);
+    color: var(--ppo-c-neutral);
+}
+
+.ppo-status--connected    { background: var(--ppo-c-success-bg); color: var(--ppo-c-success); }
+.ppo-status--disconnected { background: var(--ppo-c-danger-bg);  color: var(--ppo-c-danger);  }
+.ppo-status--unknown      { background: var(--ppo-c-warn-bg);    color: var(--ppo-c-warn);    }
+
+.ppo-status__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+/* ----- Multistore safety warning --------------------------------------- */
+
+.ppo-multistore-warning {
+    background: var(--ppo-c-warn-bg);
+    border: 1px solid var(--ppo-c-warn-border);
+    border-radius: var(--ppo-radius-md);
+    padding: var(--ppo-space-4);
+    margin: var(--ppo-space-4) 0;
+    color: var(--ppo-c-warn);
+}
+
+.ppo-multistore-warning h4 {
+    margin: 0 0 var(--ppo-space-1);
+    font-size: var(--ppo-text-md);
+    font-weight: 600;
+}
+
+.ppo-multistore-warning p {
+    margin: var(--ppo-space-1) 0;
+}
+
+/* ----- Migration banner ------------------------------------------------- */
+
+.ppo-banner-info {
+    background: var(--ppo-c-info-bg);
+    border: 1px solid var(--ppo-c-primary-border);
+    padding: var(--ppo-space-4);
+    border-radius: var(--ppo-radius-md);
+    margin-bottom: var(--ppo-space-3);
+}
+
+.ppo-banner-info h4 {
+    margin: 0 0 var(--ppo-space-1);
+    font-size: var(--ppo-text-md);
+    font-weight: 600;
+    color: var(--ppo-c-info);
+}
+
+.ppo-banner-info p {
+    margin: var(--ppo-space-1) 0;
+    font-size: var(--ppo-text-base);
+}
+
+.ppo-banner-info__actions {
+    margin-top: var(--ppo-space-2);
+    display: flex;
+    gap: var(--ppo-space-1);
+}
+
+/* ----- Loading / spinner ------------------------------------------------- */
+
+.ppo-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: -2px;
+    animation: ppo-spin 0.6s linear infinite;
+}
+
+@keyframes ppo-spin {
+    to { transform: rotate(360deg); }
+}
+
+.ppo-loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.ppo-loading::after {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-left: var(--ppo-space-2);
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: ppo-spin 0.6s linear infinite;
+    vertical-align: -2px;
+}
+
+/* ----- Toast notice (for fetch results) -------------------------------- */
+
+.ppo-notice {
+    padding: var(--ppo-space-2) var(--ppo-space-3);
+    border-radius: var(--ppo-radius-md);
+    margin-bottom: var(--ppo-space-3);
+    font-size: var(--ppo-text-base);
+    white-space: pre-line;
+    background: var(--ppo-c-neutral-bg);
+    color: var(--ppo-c-neutral);
+}
+
+.ppo-notice--success { background: var(--ppo-c-success-bg); color: var(--ppo-c-success); }
+.ppo-notice--error   { background: var(--ppo-c-danger-bg);  color: var(--ppo-c-danger);  }
+.ppo-notice--warn    { background: var(--ppo-c-warn-bg);    color: var(--ppo-c-warn);    }
+
+/* ----- Pagination row -------------------------------------------------- */
+
+.ppo-pagination {
+    display: flex;
+    gap: var(--ppo-space-2);
+    align-items: center;
+    margin-top: var(--ppo-space-3);
+    font-size: var(--ppo-text-base);
+    color: var(--ppo-text-muted);
+}
+
+/* ----- Quick action button ---------------------------------------------- */
+
+.ppo-quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ppo-space-2);
+    margin-bottom: var(--ppo-space-5);
+    padding: var(--ppo-space-3);
+    background: var(--ppo-bg-subtle);
+    border-radius: var(--ppo-radius-md);
+    border: 1px solid var(--ppo-border-subtle);
+}
+
+.ppo-quick-actions form {
+    display: inline;
+}
+
+/* ----- Detail row (log expansion) -------------------------------------- */
+
+.ppo-detail-pane {
+    background: var(--ppo-bg-subtle);
+    border: 1px solid var(--ppo-border);
+    border-radius: var(--ppo-radius-md);
+    padding: var(--ppo-space-3);
+    margin-top: var(--ppo-space-2);
+}
+
+.ppo-detail-pane h5 {
+    margin: var(--ppo-space-2) 0 var(--ppo-space-1);
+    font-size: var(--ppo-text-base);
+    font-weight: 600;
+}
+
+.ppo-detail-pane pre {
+    background: var(--ppo-bg-card);
+    border: 1px solid var(--ppo-border);
+    padding: var(--ppo-space-2);
+    max-height: 320px;
+    overflow: auto;
+    font-size: var(--ppo-text-sm);
+    line-height: 1.4;
+    font-family: var(--ppo-font-mono);
+    margin: 0;
+}
+
+/* Raw Omniva error text shown inline under the humanized message in the
+   Logs table — visually subordinate so the actionable summary stays the
+   primary read, but always visible without an expand-row click. */
+.ppo-log-raw {
+    margin-top: var(--ppo-space-1);
+    font-size: 11px;
+    color: var(--ppo-text-muted, #6b7280);
+}
+
+.ppo-log-raw__label {
+    display: inline-block;
+    margin-right: var(--ppo-space-1);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ppo-log-raw__line {
+    display: block;
+    padding: 2px 6px;
+    margin-top: 2px;
+    background: var(--ppo-bg-subtle);
+    border-left: 2px solid var(--ppo-c-danger, #dc3545);
+    font-family: var(--ppo-font-mono);
+    font-size: 11px;
+    color: var(--ppo-text);
+    word-break: break-word;
+}
+
+/* Inline collapsible request/response payload directly in the Logs table —
+   collapsed by default to keep the row scannable, but the XML lives in the
+   page source so opening is instant and several can be open at once. */
+.ppo-log-payload {
+    margin-top: var(--ppo-space-1);
+    border: 1px solid var(--ppo-border, #e5e7eb);
+    border-radius: var(--ppo-radius-sm, 4px);
+    background: var(--ppo-bg-subtle, #f3f4f6);
+}
+
+.ppo-log-payload > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ppo-text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    user-select: none;
+}
+
+.ppo-log-payload > summary::-webkit-details-marker { display: none; }
+
+.ppo-log-payload > summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.15s ease;
+    color: var(--ppo-text-muted, #6b7280);
+}
+
+.ppo-log-payload[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.ppo-log-payload__size {
+    margin-left: 6px;
+    font-weight: 400;
+    color: var(--ppo-text-muted, #6b7280);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.ppo-log-payload pre {
+    margin: 0;
+    padding: var(--ppo-space-2);
+    border-top: 1px solid var(--ppo-border, #e5e7eb);
+    background: var(--ppo-bg-card, #fff);
+    font-family: var(--ppo-font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+    max-height: 360px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ----- Row actions cell ------------------------------------------------- */
+
+.ppo-row-actions {
+    white-space: nowrap;
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+}
+
+.ppo-row-actions .btn {
+    padding: 4px var(--ppo-space-2);
+    font-size: var(--ppo-text-sm);
+}
+
+.ppo-row-actions form {
+    display: inline;
+}
+
+/* ----- Bulk-toggle helper text ----------------------------------------- */
+
+.ppo-bulk-toggle {
+    font-size: var(--ppo-text-sm);
+    color: var(--ppo-c-info);
+    cursor: pointer;
+    user-select: none;
+}
+
+.ppo-bulk-toggle:hover {
+    text-decoration: underline;
+}
+
+/* ----- Visual error list (validation) ---------------------------------- */
+
+.ppo-errors {
+    background: var(--ppo-c-danger-bg);
+    border: 1px solid var(--ppo-c-danger-border);
+    padding: var(--ppo-space-3);
+    border-radius: var(--ppo-radius-md);
+    margin-bottom: var(--ppo-space-3);
+}
+
+.ppo-errors ul {
+    margin: var(--ppo-space-1) 0 0;
+    padding-left: var(--ppo-space-5);
+}
+
+/* ----- Modal (Call Courier on manifests page) -------------------------- */
+
+.ppo-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9000;
+}
+
+body.ppo-modal-open {
+    overflow: hidden;
+}
+
+.ppo-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.ppo-modal__panel {
+    position: relative;
+    background: var(--ppo-bg-surface, #fff);
+    color: var(--ppo-text, #1c2230);
+    border-radius: var(--ppo-radius-lg, 8px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.ppo-modal__header,
+.ppo-modal__body,
+.ppo-modal__footer {
+    padding: var(--ppo-space-4, 16px);
+}
+
+.ppo-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--ppo-border, #e5e7eb);
+}
+
+.ppo-modal__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ppo-modal__close {
+    background: none;
+    border: 0;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--ppo-text-muted, #6b7280);
+    padding: 0 var(--ppo-space-1, 4px);
+}
+
+.ppo-modal__close:hover {
+    color: var(--ppo-text, #1c2230);
+}
+
+.ppo-modal__hint {
+    margin: 0 0 var(--ppo-space-3, 12px);
+    font-size: 13px;
+    color: var(--ppo-text-muted, #6b7280);
+}
+
+.ppo-modal__row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    gap: var(--ppo-space-3, 12px);
+    margin-bottom: var(--ppo-space-2, 8px);
+}
+
+.ppo-modal__row label {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.ppo-modal__row code {
+    font-family: var(--ppo-font-mono);
+    font-size: 13px;
+    background: var(--ppo-bg-subtle, #f3f4f6);
+    padding: 2px 6px;
+    border-radius: var(--ppo-radius-sm, 4px);
+}
+
+.ppo-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ppo-space-2, 8px);
+    border-top: 1px solid var(--ppo-border, #e5e7eb);
+}

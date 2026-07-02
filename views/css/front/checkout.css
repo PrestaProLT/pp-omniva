@@ -1,0 +1,668 @@
+/* ==========================================================================
+   PPOmniva Checkout — Pickup Terminal Selector & Courier Extra Fields
+   ========================================================================== */
+
+/* The checkout collapses the carrier-extra wrapper with inline
+   `display: none; max-height: 0` and is supposed to expand it on radio
+   selection, but the binding is unreliable on Symfony-routed checkouts.
+   When a delivery option's radio is checked, force the wrapper open so the
+   pickup map / terminal list / courier fields are actually visible. The
+   :has() selector targets the wrapper from any descendant of the checked
+   option; modern browsers (Chrome 105+, Safari 15.4+, Firefox 121+) support
+   it. The vanilla-JS fallback in checkout.js covers older browsers.
+   Both class variants are listed so this holds on Classic-derived themes
+   (js- prefix) and custom themes that drop it. */
+.js-delivery-option:has(input[type="radio"]:checked) .js-carrier-extra-content,
+.delivery-option:has(input[type="radio"]:checked) .carrier-extra-content {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* When the carrier-extra wrapper holds only the picker's "selected" panel,
+   collapse the theme's default padding — the panel already has its own
+   coloured padded box, the wrapper's extra space just opens an awkward gap
+   between the carrier row and the next one. */
+.js-delivery-option .js-carrier-extra-content:has(.ppomniva-pickup__selected:not([style*="display:none"])):not(:has(.ppomniva-pickup__map-container:not([style*="display:none"]))),
+.delivery-option .carrier-extra-content:has(.ppomniva-pickup__selected:not([style*="display:none"])):not(:has(.ppomniva-pickup__map-container:not([style*="display:none"]))) {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* -------------------------------------------------------------------------
+   Pickup Point Selector
+   ------------------------------------------------------------------------- */
+
+.ppomniva-pickup {
+    padding: 8px 0;
+    /* Defensive box-sizing + width clamp so the picker never overflows the
+       checkout column on narrow viewports. Without this the Leaflet map and
+       wide terminal items push the page wide and a horizontal scrollbar
+       appears on phones. */
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* When a terminal is already chosen the picker only renders the green
+   "selected" panel — there's no map, list or toolbar following it. Drop the
+   wrapper padding entirely so the panel sits flush under the carrier title
+   instead of opening a tall empty gap before the next carrier row. */
+.ppomniva-pickup:has(.js-ppomniva-selected:not([style*="display:none"])) {
+    padding: 0;
+}
+
+.ppomniva-pickup *,
+.ppomniva-pickup *::before,
+.ppomniva-pickup *::after {
+    box-sizing: border-box;
+}
+
+.ppomniva-pickup__title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+/* Toolbar — text search + nearest-by-postcode in a single horizontal row.
+   Inputs share one base style (`__field`) so the theme can't accidentally
+   make one visible and the other invisible. The `!important`s on color +
+   border + background defend against Hummingbird's input resets which
+   otherwise blend the fields into the white background. */
+.ppomniva-pickup__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ppomniva-pickup__nearest {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1 1 100%;
+    min-width: 0;
+}
+
+.ppomniva-pickup__search-input,
+.ppomniva-pickup__nearest-input {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    color: #2b2b2b !important;
+    background-color: #fafafa !important;
+    border: 1px solid #b8b8b8 !important;
+    border-radius: 6px !important;
+    outline: none;
+    box-shadow: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.ppomniva-pickup__search-input:focus,
+.ppomniva-pickup__nearest-input:focus {
+    border-color: #4a90d9 !important;
+    background-color: #fff !important;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.18);
+}
+
+.ppomniva-pickup__search-input::placeholder,
+.ppomniva-pickup__nearest-input::placeholder {
+    color: #888;
+}
+
+.ppomniva-pickup__nearest-btn {
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 0 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    background-color: #4a90d9;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+.ppomniva-pickup__nearest-btn:hover,
+.ppomniva-pickup__nearest-btn:focus {
+    background-color: #3a7cc1;
+    outline: none;
+}
+
+.ppomniva-pickup__nearest-status {
+    flex: 1 1 100%;
+    margin-top: 2px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: #666;
+    min-height: 1em;
+}
+
+.ppomniva-pickup__nearest-status[data-kind="error"]   { color: #c0392b; }
+.ppomniva-pickup__nearest-status[data-kind="success"] { color: #1e7e34; }
+.ppomniva-pickup__nearest-status[data-kind="info"]    { color: #1f6fb2; }
+
+@media (max-width: 640px) {
+    .ppomniva-pickup__search,
+    .ppomniva-pickup__nearest {
+        flex: 1 1 100%;
+    }
+}
+
+/* Selected terminal display */
+.ppomniva-pickup__selected {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background-color: #f0faf0;
+    border-left: 4px solid #28a745;
+    border-radius: 6px;
+    /* No bottom margin — when this is rendered, nothing else follows
+       inside the picker (toolbar/map/list are all hidden). Bottom margin
+       just opens a tall gap before the next carrier row. */
+    margin-bottom: 0;
+}
+
+.ppomniva-pickup__selected-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #28a745;
+    color: #fff;
+    border-radius: 50%;
+}
+
+.ppomniva-pickup__selected-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.ppomniva-pickup__selected-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.ppomniva-pickup__selected-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.3;
+}
+
+.ppomniva-pickup__selected-address {
+    font-size: 0.82rem;
+    color: #666;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+.ppomniva-pickup__change-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #4a90d9;
+    background: transparent;
+    border: 1px solid #4a90d9;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+}
+
+.ppomniva-pickup__change-btn:hover {
+    background-color: #4a90d9;
+    color: #fff;
+}
+
+/* Selector container (map + list) */
+.ppomniva-pickup__selector {
+    /* shown/hidden by JS */
+}
+
+/* Map */
+.ppomniva-pickup__map-container {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.ppomniva-pickup__map {
+    width: 100%;
+    height: 300px;
+    max-width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    border: 1px solid #e0e0e0;
+    /* Leaflet's tile layer is positioned absolutely; container must be
+       relative + clip to keep wide tiles from spilling out on narrow
+       viewports and triggering horizontal scroll. */
+    position: relative;
+}
+
+/* List-search input (above the scrollable list) — same defensive style as
+   the toolbar inputs so the theme can't hide it. */
+.ppomniva-pickup__list-search {
+    margin-bottom: 8px;
+}
+
+.ppomniva-pickup__list-search-input {
+    display: block !important;
+    width: 100%;
+    height: 36px;
+    padding: 6px 10px !important;
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+    color: #2b2b2b !important;
+    background-color: #fafafa !important;
+    border: 1px solid #b8b8b8 !important;
+    border-radius: 6px !important;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.ppomniva-pickup__list-search-input:focus {
+    border-color: #4a90d9 !important;
+    background-color: #fff !important;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.18);
+}
+
+/* Distance pill on each terminal item */
+.ppomniva-pickup__item-distance {
+    flex: 0 0 auto;
+    align-self: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #4a90d9;
+    background: rgba(74, 144, 217, 0.1);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    margin-left: 4px;
+}
+
+.ppomniva-pickup__map .leaflet-popup-content {
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.ppomniva-pickup__map-select-btn {
+    display: inline-block;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: #28a745;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.ppomniva-pickup__map-select-btn:hover {
+    background-color: #218838;
+}
+
+/* Terminal list */
+.ppomniva-pickup__list {
+    margin-top: 8px;
+}
+
+.ppomniva-pickup__list-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.ppomniva-pickup__list-items {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background-color: #fff;
+}
+
+.ppomniva-pickup__list-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ppomniva-pickup__list-items::-webkit-scrollbar-track {
+    background: #f5f5f5;
+    border-radius: 3px;
+}
+
+.ppomniva-pickup__list-items::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.ppomniva-pickup__list-items::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+/* Terminal list item */
+.ppomniva-pickup__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.ppomniva-pickup__item:last-child {
+    border-bottom: none;
+}
+
+.ppomniva-pickup__item:hover {
+    background-color: #f5f9ff;
+}
+
+.ppomniva-pickup__item--selected {
+    background-color: #e8f5e9;
+}
+
+.ppomniva-pickup__item-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: #888;
+}
+
+.ppomniva-pickup__item:hover .ppomniva-pickup__item-icon {
+    color: #4a90d9;
+}
+
+.ppomniva-pickup__item-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.ppomniva-pickup__item-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #333;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ppomniva-pickup__item-address {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 1px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ppomniva-pickup__item-type {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.ppomniva-pickup__item-type--pickup {
+    color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.ppomniva-pickup__item-type--locker {
+    color: #6f42c1;
+    background-color: #f0e8ff;
+}
+
+.ppomniva-pickup__item-type--shop {
+    color: #c5680a;
+    background-color: #fff1de;
+}
+
+/* COD-availability badge — shown on every list item next to the type pill.
+   Green euro = cash on delivery available; muted/strike-through = not. */
+.ppomniva-pickup__item-cod {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin-right: 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: 50%;
+    line-height: 1;
+}
+
+.ppomniva-pickup__item-cod--yes {
+    color: #1e7e34;
+    background-color: #e6f4ea;
+}
+
+.ppomniva-pickup__item-cod--no {
+    color: #b0b0b0;
+    background-color: #f0f0f0;
+    text-decoration: line-through;
+}
+
+
+/* Loading & empty states */
+.ppomniva-pickup__loading,
+.ppomniva-pickup__empty {
+    padding: 24px 16px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.ppomniva-pickup__loading::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ccc;
+    border-top-color: #4a90d9;
+    border-radius: 50%;
+    animation: ppomniva-spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+@keyframes ppomniva-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error message */
+.ppomniva-pickup__error {
+    display: none;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    color: #dc3545;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+/* -------------------------------------------------------------------------
+   Courier Extra Fields
+   ------------------------------------------------------------------------- */
+
+.ppomniva-courier {
+    padding: 12px 0;
+}
+
+.ppomniva-courier__title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.ppomniva-courier__field {
+    margin-bottom: 12px;
+}
+
+.ppomniva-courier__field label {
+    display: block;
+    /* Classic (and themes derived from it) right-align checkout form labels,
+       which pushes these field labels to the far edge above their inputs.
+       Pin the alignment so the courier fields read left-to-right on any
+       theme instead of inheriting the theme's label default. */
+    text-align: left;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 4px;
+}
+
+.ppomniva-courier__input,
+.ppomniva-courier__select {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.ppomniva-courier__input:focus,
+.ppomniva-courier__select:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+}
+
+.ppomniva-courier__select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.ppomniva-courier__field--checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ppomniva-courier__field--checkbox label {
+    display: inline;
+    margin-bottom: 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.ppomniva-courier__checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #4a90d9;
+}
+
+.ppomniva-courier__field-hint {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 2px;
+}
+
+/* -------------------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+    .ppomniva-pickup__map {
+        height: 250px;
+    }
+
+    .ppomniva-pickup__list-items {
+        max-height: 200px;
+    }
+
+    .ppomniva-pickup__selected {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .ppomniva-pickup__change-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ppomniva-pickup__item-name,
+    .ppomniva-pickup__item-address {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    /* The terminal item is a flex row by default — on narrow viewports, let
+       the info column shrink instead of pushing the row past 100% width. */
+    .ppomniva-pickup__item-info {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .ppomniva-pickup__item-distance {
+        font-size: 0.68rem;
+        padding: 2px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ppomniva-pickup__map {
+        height: 200px;
+    }
+
+    .ppomniva-pickup__item {
+        padding: 8px 10px;
+    }
+
+    .ppomniva-pickup__item-icon {
+        display: none;
+    }
+}
