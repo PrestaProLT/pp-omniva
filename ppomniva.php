@@ -24,9 +24,7 @@ if (!defined('_PS_VERSION_')) {
  * PrestaPro — Omniva.
  *
  * Omniva (Baltic post) courier + parcel-machine shipping integration for
- * PrestaShop 9. Modeled on the sibling `ppvenipak` module and the shared
- * `prestapro/pp-common` carrier base. See docs/OMNIVA_API.md for the Omniva
- * OMX API reference this module targets.
+ * PrestaShop 9, built on the shared `prestapro/pp-common` carrier base.
  */
 class PPOmniva extends AbstractPPCarrier
 {
@@ -57,7 +55,7 @@ class PPOmniva extends AbstractPPCarrier
     {
         $this->name = 'ppomniva';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.0.1';
+        $this->version = '1.0.2';
         $this->author = 'PrestaPro';
         $this->author_uri = 'https://prestapro.lt/modules/ppomniva';
         $this->need_instance = 0;
@@ -87,10 +85,23 @@ class PPOmniva extends AbstractPPCarrier
 
     public function getContent(): void
     {
-        $router = $this->get('router');
-        Tools::redirectAdmin(
-            $router->generate('ps_ppomniva_dashboard')
-        );
+        try {
+            $router = $this->get('router');
+            Tools::redirectAdmin(
+                $router->generate('ps_ppomniva_dashboard')
+            );
+        } catch (\Throwable $e) {
+            // The module's Symfony routes are not yet compiled into the router
+            // — this happens on a fresh install or upgrade before the Symfony
+            // cache has been rebuilt, and clicking "Configure" would otherwise
+            // throw RouteNotFoundException. Clear the cache so the routes are
+            // registered and bounce back to the module list; opening the module
+            // again lands on the dashboard.
+            Tools::clearSf2Cache();
+            Tools::redirectAdmin(
+                $this->context->link->getAdminLink('AdminModules')
+            );
+        }
     }
 
     protected function getConfigPrefix(): string
