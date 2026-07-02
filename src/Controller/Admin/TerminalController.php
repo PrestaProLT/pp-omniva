@@ -93,9 +93,38 @@ class TerminalController extends FrameworkBundleAdminController
                 'cod' => $codFilter,
             ],
             'sync_url' => $this->generateUrl('ps_ppomniva_terminals_sync'),
+            'toggle_url' => $this->generateUrl('ps_ppomniva_terminals_toggle'),
             'index_url' => $this->generateUrl('ps_ppomniva_terminals'),
             'multistore_blocked' => false,
         ]);
+    }
+
+    /**
+     * Enable/disable a single parcel machine. Disabled points stay in the cache
+     * and admin list but are hidden from the checkout terminal selector.
+     */
+    #[AdminSecurity("is_granted('update', request.get('_legacy_controller'))")]
+    public function toggle(Request $request): RedirectResponse
+    {
+        $id = (int) $request->request->get('id_terminal', 0);
+        $country = strtoupper((string) $request->request->get('country', 'LT'));
+        $redirectParams = in_array($country, self::COUNTRIES, true) ? ['country' => $country] : [];
+
+        if ($id <= 0) {
+            $this->addFlash('error', $this->trans('Invalid parcel machine.', 'Modules.Ppomniva.Admin'));
+
+            return $this->redirectToRoute('ps_ppomniva_terminals', $redirectParams);
+        }
+
+        $db = Db::getInstance();
+        $table = _DB_PREFIX_ . 'ppomniva_terminal';
+        $db->execute(
+            'UPDATE `' . $table . '` SET `enabled` = 1 - `enabled` WHERE `id_ppomniva_terminal` = ' . $id
+        );
+
+        $this->addFlash('success', $this->trans('Parcel machine visibility updated.', 'Modules.Ppomniva.Admin'));
+
+        return $this->redirectToRoute('ps_ppomniva_terminals', $redirectParams);
     }
 
     #[AdminSecurity("is_granted('update', request.get('_legacy_controller'))")]

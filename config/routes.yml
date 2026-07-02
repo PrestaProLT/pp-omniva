@@ -232,6 +232,14 @@ ps_ppomniva_terminals_sync:
         _legacy_controller: AdminPPOmniva
         _legacy_link: AdminPPOmniva
 
+ps_ppomniva_terminals_toggle:
+    path: /ppomniva/terminals/toggle
+    methods: [POST]
+    defaults:
+        _controller: 'PrestaShop\Module\PPOmniva\Controller\Admin\TerminalController::toggle'
+        _legacy_controller: AdminPPOmniva
+        _legacy_link: AdminPPOmniva
+
 # --- Warehouses ---
 
 ps_ppomniva_warehouses:
