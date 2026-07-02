@@ -20,8 +20,16 @@ as a sibling of the **PrestaPro — Venipak** module.
 ### Carriers
 - **Omniva Courier** — door‑to‑door home and office delivery.
 - **Omniva Parcel Machine** — self‑service parcel terminals / lockers.
+- **Localized carrier names** — set the courier and parcel‑machine display names
+  **per language** (translatable in the carrier settings).
 - Automatic carrier creation, zone/group/price‑range assignment and tracking
   URL wiring on install.
+
+### Parcel tracking
+- **Integrated tracking** — pulls shipment tracking events from Omniva and maps
+  them to the corresponding PrestaShop order statuses.
+- Runs **automatically via cron**, and on demand with the **Refresh tracking**
+  button in the back‑office order panel.
 
 ### Checkout (front office)
 - **Interactive parcel‑machine selector** with an OpenStreetMap/Leaflet map,
