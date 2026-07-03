@@ -4,6 +4,13 @@ All notable changes to **PrestaPro — Omniva** are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/) and the
 [Keep a Changelog](https://keepachangelog.com/) format.
 
+## [1.0.6] — 2026-07-03
+
+### Changed
+- The configuration page now renders the migration card from the shared
+  `pp-common` partial (loading `prestapro-carrier.css` via the admin menu),
+  removing the module-local duplicate markup/CSS. No change in behaviour.
+
 ## [1.0.5] — 2026-07-03
 
 ### Changed

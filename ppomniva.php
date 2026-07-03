@@ -55,7 +55,7 @@ class PPOmniva extends AbstractPPCarrier
     {
         $this->name = 'ppomniva';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.0.5';
+        $this->version = '1.0.6';
         $this->author = 'PrestaPro';
         $this->author_uri = 'https://prestapro.lt/modules/ppomniva';
         $this->need_instance = 0;
