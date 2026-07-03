@@ -4,6 +4,11 @@ All notable changes to **PrestaPro — Omniva** are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/) and the
 [Keep a Changelog](https://keepachangelog.com/) format.
 
+## [1.0.8] — 2026-07-03
+
+### Changed
+- Refreshed the carrier logo with the official Omniva logo (vertical lockup, brand orange) from Omniva's brand assets.
+
 ## [1.0.7] — 2026-07-03
 
 ### Added
