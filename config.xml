@@ -2,7 +2,7 @@
 <module>
     <name>ppomniva</name>
     <displayName><![CDATA[PrestaPro &mdash; Omniva]]></displayName>
-    <version><![CDATA[1.0.2]]></version>
+    <version><![CDATA[1.0.3]]></version>
     <description><![CDATA[Omniva courier and parcel-machine shipping integration for PrestaShop.]]></description>
     <author><![CDATA[PrestaPro]]></author><author_uri><![CDATA[https://prestapro.lt/modules/ppomniva]]></author_uri>
     <tab><![CDATA[shipping_logistics]]></tab>

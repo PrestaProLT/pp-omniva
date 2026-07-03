@@ -4,6 +4,19 @@ All notable changes to **PrestaPro — Omniva** are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/) and the
 [Keep a Changelog](https://keepachangelog.com/) format.
 
+## [1.0.3] — 2026-07-02
+
+### Added
+- **Carrier logos** — newly created Omniva carriers now ship with a logo
+  instead of PrestaShop's blank placeholder in the carrier list and at checkout.
+  Existing installs get the logo back-filled on upgrade.
+
+### Changed
+- **Redesigned the legacy-migration UI** on the configuration page. The
+  "Preview" action no longer opens a raw JSON page; what will be imported
+  (orders, warehouses, manifests, settings, carriers) is shown as a clear
+  summary, with dry-run / import actions and a readable result panel.
+
 ## [1.0.2] — 2026-07-02
 
 ### Fixed
