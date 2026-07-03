@@ -2,7 +2,8 @@
      data-ajax-url="{$ppomniva_ajax_url}"
      data-country="{$ppomniva_country_code}"
      data-postcode="{$ppomniva_postcode|escape:'html':'UTF-8'}"
-     data-carrier-id="{$ppomniva_carrier_id}">
+     data-carrier-id="{$ppomniva_carrier_id}"
+     data-i18n="{$ppomniva_i18n|escape:'html':'UTF-8'}">
 
     {* Top toolbar — nearest-by-postcode only. Free-text filtering lives in
        the list search bar above the scrollable list, where it's right next
