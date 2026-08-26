@@ -14,8 +14,11 @@
     var MAP_DEFAULT_ZOOM = 7;
     var MAP_NEAREST_ZOOM = 13; // post-geocode zoom — city block / neighbourhood
     var NEAREST_TOP_N = 5;     // when sorted by distance, only render the N closest
-    var LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    var LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    /* Leaflet ships with the module (views/js/lib/leaflet.js) and is
+       registered by hookActionFrontControllerSetMedia. Nothing is fetched from
+       a CDN at checkout any more: that request was the first thing a
+       Content-Security-Policy or a locked-down network killed, and it took the
+       map with it. */
 
     /* ------------------------------------------------------------------ */
     /*  State                                                              */
@@ -30,8 +33,6 @@
     // triggers, and so a slow in-flight auto-nearest geocode can't clobber a
     // selection the customer made while it was still resolving.
     var terminalCommitted = false;
-    var leafletLoading = false;
-    var leafletCallbacks = [];
 
     /* ------------------------------------------------------------------ */
     /*  Helpers                                                            */
@@ -102,34 +103,61 @@
     /* ------------------------------------------------------------------ */
 
     function loadLeaflet(callback) {
+        // Bundled and registered alongside this file. If it is genuinely
+        // absent the map is skipped — the terminal list and the
+        // server-rendered <select> both work without it.
         if (window.L) {
             callback();
             return;
         }
 
-        leafletCallbacks.push(callback);
+        console.warn('PPOmniva: Leaflet unavailable, map disabled.');
+    }
 
-        if (leafletLoading) return;
-        leafletLoading = true;
+    /**
+     * Terminals rendered into the page by the hook. Present on every normal
+     * render, which is why the picker no longer needs an AJAX round trip to
+     * show anything.
+     */
+    function readEmbeddedTerminals(container) {
+        var node = container.querySelector('.js-ppomniva-terminals');
+        if (!node) return null;
 
-        var css = document.createElement('link');
-        css.rel = 'stylesheet';
-        css.href = LEAFLET_CSS;
-        document.head.appendChild(css);
+        try {
+            var parsed = JSON.parse(node.textContent || node.innerText || 'null');
+            return Array.isArray(parsed) && parsed.length ? parsed : null;
+        } catch (e) {
+            return null;
+        }
+    }
 
-        var js = document.createElement('script');
-        js.src = LEAFLET_JS;
-        js.onload = function () {
-            leafletLoading = false;
-            var cbs = leafletCallbacks.slice();
-            leafletCallbacks = [];
-            cbs.forEach(function (cb) { cb(); });
-        };
-        js.onerror = function () {
-            leafletLoading = false;
-            console.error('PPOmniva: Failed to load Leaflet.');
-        };
-        document.head.appendChild(js);
+    /**
+     * Once the map + filterable list are up, the plain <select> is redundant.
+     * Disabling it (not just hiding it) keeps it out of the submitted form so
+     * it cannot fight the hidden input over the same value.
+     */
+    function retireBasicPicker(container) {
+        var basic = container.querySelector('.js-ppomniva-basic');
+        if (!basic) return;
+
+        var select = basic.querySelector('.js-ppomniva-basic-select');
+        if (select) select.disabled = true;
+        basic.style.display = 'none';
+    }
+
+    /**
+     * Keep the plain <select> usable while it is still on screen: if the rich
+     * list never renders, this is the customer's only way to choose.
+     */
+    function bindBasicPicker(container, ajaxUrl) {
+        var select = container.querySelector('.js-ppomniva-basic-select');
+        if (!select || select.dataset.ppBound) return;
+
+        select.dataset.ppBound = '1';
+        select.addEventListener('change', function () {
+            var terminal = findTerminal(select.value);
+            if (terminal) selectTerminal(terminal, ajaxUrl, container);
+        });
     }
 
     /* ------------------------------------------------------------------ */
@@ -564,16 +592,19 @@
             return;
         }
 
-        showLoading(container);
+        bindBasicPicker(container, ajaxUrl);
 
-        loadTerminals(ajaxUrl, country, function (err, terminals) {
+        var onTerminals = function (err, terminals) {
             if (err) {
+                // The server-rendered <select> is still on screen and still
+                // works, so surface the problem without wiping the picker.
                 showError(container, err);
                 return;
             }
 
             allTerminals = terminals;
             renderTerminalList(container, terminals);
+            retireBasicPicker(container);
 
             // If a terminal was preselected, show the selected state
             if (preselectedId) {
@@ -605,7 +636,15 @@
                     });
                 }
             });
-        });
+        };
+
+        var embedded = readEmbeddedTerminals(container);
+        if (embedded) {
+            onTerminals(null, embedded);
+        } else {
+            showLoading(container);
+            loadTerminals(ajaxUrl, country, onTerminals);
+        }
 
         // Single text-filter input lives directly above the terminal list
         // (the toolbar at the top is dedicated to the postcode "Find nearest"

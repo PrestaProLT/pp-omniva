@@ -166,6 +166,10 @@
         <source>top match: %name%</source>
         <target>parim vaste: %name%</target>
       </trans-unit>
+      <trans-unit id="27d6e93ae9563c785c8abf7b416577a1">
+        <source>Select a pickup point</source>
+        <target>Valige kättesaamispunkt</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

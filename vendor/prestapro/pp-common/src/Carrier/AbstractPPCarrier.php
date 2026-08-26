@@ -137,8 +137,14 @@ abstract class AbstractPPCarrier extends CarrierModule
             $configKeyId = $prefix . '_' . strtoupper($key) . '_ID';
             $configKeyRef = $prefix . '_' . strtoupper($key) . '_ID_REF';
 
+            // Written globally as well as in the current shop context. These
+            // two keys are what a checkout carrier is matched against, and a
+            // shop-scoped-only row makes the module invisible to every
+            // sibling shop — the carrier renders, its extra content does not.
             Configuration::updateValue($configKeyId, (int) $carrier->id);
             Configuration::updateValue($configKeyRef, (int) $carrier->id);
+            Configuration::updateGlobalValue($configKeyId, (int) $carrier->id);
+            Configuration::updateGlobalValue($configKeyRef, (int) $carrier->id);
 
             $carriers[$key] = (int) $carrier->id;
         }
@@ -216,15 +222,29 @@ abstract class AbstractPPCarrier extends CarrierModule
     public function hookActionCarrierUpdate(array $params): void
     {
         $prefix = $this->getConfigPrefix();
-        $newCarrierId = (int) $params['id_carrier'];
-        $oldCarrierId = (int) ($params['carrier']->id ?? 0);
+
+        // PrestaShop fires this with `id_carrier` = the OLD (soft-deleted)
+        // carrier and `carrier` = the freshly inserted replacement — see
+        // AdminCarrierWizardController::processRanges(),
+        // AdminCarriersController and EditCarrierHandler, which all pass
+        // ['id_carrier' => $current_carrier->id, 'carrier' => $new_carrier].
+        // Reading them the other way round wrote the dead id back over the
+        // live one, so every back-office carrier edit quietly detached the
+        // carrier from this module. id_reference needs no update: PrestaShop
+        // preserves it across the swap.
+        $oldCarrierId = (int) ($params['id_carrier'] ?? 0);
+        $newCarrierId = (int) ($params['carrier']->id ?? 0);
+
+        if ($oldCarrierId <= 0 || $newCarrierId <= 0) {
+            return;
+        }
 
         foreach (array_keys($this->getCarrierDefinitions()) as $key) {
             $configKeyId = $prefix . '_' . strtoupper($key) . '_ID';
-            $storedId = (int) Configuration::get($configKeyId);
 
-            if ($storedId === $oldCarrierId) {
+            if ((int) Configuration::get($configKeyId) === $oldCarrierId) {
                 Configuration::updateValue($configKeyId, $newCarrierId);
+                Configuration::updateGlobalValue($configKeyId, $newCarrierId);
             }
         }
     }
@@ -288,17 +308,7 @@ abstract class AbstractPPCarrier extends CarrierModule
      */
     public function isOwnCarrier(int $idCarrier): bool
     {
-        $prefix = $this->getConfigPrefix();
-
-        foreach (array_keys($this->getCarrierDefinitions()) as $key) {
-            $configKeyId = $prefix . '_' . strtoupper($key) . '_ID';
-
-            if ((int) Configuration::get($configKeyId) === $idCarrier) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->resolveCarrierKey($idCarrier) !== null;
     }
 
     /**
@@ -306,17 +316,148 @@ abstract class AbstractPPCarrier extends CarrierModule
      */
     public function getCarrierKey(int $idCarrier): ?string
     {
+        return $this->resolveCarrierKey($idCarrier);
+    }
+
+    /**
+     * Resolve one of this module's carrier keys from whatever a checkout
+     * hands to `displayCarrierExtraContent`.
+     *
+     * Core (DeliveryOptionsFinder) passes the presented Carrier array, which
+     * carries every ObjectModel field plus `id`. Custom and one-page
+     * checkouts routinely pass a hand-built array instead, naming the same
+     * value `id_carrier`, or supplying only `id_reference`. Accepting all
+     * three costs nothing on stock PrestaShop — the extra keys simply are
+     * not there — and stops the hook returning an empty string on the
+     * checkouts that do things their own way.
+     *
+     * @param array<string, mixed> $carrier the hook's `carrier` payload
+     */
+    public function getCarrierKeyFromHookParams(array $carrier): ?string
+    {
+        $idCarrier = (int) ($carrier['id'] ?? $carrier['id_carrier'] ?? 0);
+        $idReference = (int) ($carrier['id_reference'] ?? 0);
+
+        return $this->resolveCarrierKey($idCarrier, $idReference);
+    }
+
+    /**
+     * Resolve a live carrier id to one of this module's carrier keys.
+     *
+     * Matches on the stable id_reference first. PrestaShop reassigns
+     * id_carrier on every back-office carrier edit — it soft-deletes the old
+     * row and inserts a replacement — but keeps id_reference constant.
+     * Matching only on the volatile *_ID goes stale after such an edit, which
+     * makes isOwnCarrier() silently miss: the carrier still shows in the
+     * checkout, but its pickup-point selector never renders. Falls back to
+     * *_ID for installs whose *_ID_REF was never populated.
+     */
+    private function resolveCarrierKey(int $idCarrier, int $idReference = 0): ?string
+    {
+        if ($idCarrier <= 0 && $idReference <= 0) {
+            return null;
+        }
+
         $prefix = $this->getConfigPrefix();
 
-        foreach (array_keys($this->getCarrierDefinitions()) as $key) {
-            $configKeyId = $prefix . '_' . strtoupper($key) . '_ID';
+        if ($idReference <= 0 && $idCarrier > 0) {
+            $idReference = (int) Db::getInstance()->getValue(
+                'SELECT `id_reference` FROM `' . _DB_PREFIX_ . 'carrier`
+                 WHERE `id_carrier` = ' . (int) $idCarrier
+            );
+        }
 
-            if ((int) Configuration::get($configKeyId) === $idCarrier) {
+        foreach (array_keys($this->getCarrierDefinitions()) as $key) {
+            $storedRef = $this->getConfigIntAnyShop($prefix . '_' . strtoupper($key) . '_ID_REF');
+            $storedId = $this->getConfigIntAnyShop($prefix . '_' . strtoupper($key) . '_ID');
+
+            if (($idReference > 0 && $storedRef === $idReference)
+                || ($idCarrier > 0 && $storedId === $idCarrier)
+            ) {
                 return $key;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Read an integer configuration value without being fooled by shop scope.
+     *
+     * Configuration::updateValue() writes a row scoped to whatever shop
+     * context was active, so a value saved while installing or configuring in
+     * shop A reads back empty in shop B. These keys decide whether a carrier
+     * belongs to this module at all, and losing them means the checkout hook
+     * renders nothing. Prefer the value for the current context, then fall
+     * back to any non-zero row for the key.
+     */
+    private function getConfigIntAnyShop(string $key): int
+    {
+        $value = (int) Configuration::get($key);
+
+        if ($value > 0) {
+            return $value;
+        }
+
+        return (int) Db::getInstance()->getValue(
+            'SELECT `value` FROM `' . _DB_PREFIX_ . "configuration`
+             WHERE `name` = '" . pSQL($key) . "' AND CAST(`value` AS UNSIGNED) > 0
+             ORDER BY IFNULL(`id_shop`, 0) DESC"
+        );
+    }
+
+    /**
+     * Is the front controller currently rendering a checkout page?
+     *
+     * Asset registration used to test `php_self` against a fixed list. A
+     * ModuleFrontController leaves php_self null (Controller::$php_self has
+     * no default), so every one-page-checkout module fell straight through
+     * that test and the pickup-point CSS/JS never registered. Mirrors what
+     * the DPD and Unisend modules do: instanceof check for core, then the
+     * controller name, then the class name.
+     */
+    protected function isCheckoutContext(?object $controller): bool
+    {
+        if (!$controller) {
+            return false;
+        }
+
+        // Core checkout — the only path that exists on stock PrestaShop.
+        if ($controller instanceof \OrderController) {
+            return true;
+        }
+
+        if (isset($controller->php_self) && (string) $controller->php_self !== '') {
+            $page = (string) $controller->php_self;
+        } else {
+            $page = (string) Tools::getValue('controller');
+        }
+        $page = strtolower($page);
+
+        if (in_array($page, ['order', 'checkout', 'order-opc', 'orderopc'], true)) {
+            return true;
+        }
+
+        // One-page-checkout modules seen in the wild. Their front controllers
+        // do not set php_self, so the controller parameter is matched too.
+        $onePageCheckouts = [
+            'supercheckout',
+            'onepagecheckoutps',
+            'onepagecheckout',
+            'thecheckout',
+            'ppcheckout',
+            'steasycheckout',
+            'fastcheckout',
+        ];
+
+        if (in_array($page, $onePageCheckouts, true)) {
+            return true;
+        }
+
+        // Anything else that is a module front controller whose class name
+        // says "checkout" — covers custom checkouts we do not know by name.
+        return $controller instanceof \ModuleFrontController
+            && strpos(strtolower(get_class($controller)), 'checkout') !== false;
     }
 
     /**

@@ -4,6 +4,55 @@ All notable changes to **PrestaPro — Omniva** are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/) and the
 [Keep a Changelog](https://keepachangelog.com/) format.
 
+## [1.0.9] — 2026-08-26
+
+### Fixed
+- **The pickup-point selector no longer depends on JavaScript to appear.**
+  The terminal list is now resolved server-side in
+  `displayCarrierExtraContent` and rendered into the template as a real
+  `<select>`, grouped by city. Previously the template shipped an empty
+  container that `checkout.js` filled over AJAX, so a blocked asset, a
+  checkout that never ran our JS, or an unreachable module route all showed
+  the customer the same thing: a carrier row with nothing under it. The map
+  and filterable list still replace the `<select>` as soon as the JS
+  initialises; the plain control is then hidden and disabled so it cannot
+  submit a competing value.
+- **Carrier identity no longer breaks on non-core checkouts.** The hook read
+  only `$params['carrier']['id']`, which core supplies but hand-built
+  one-page-checkout payloads often do not — they pass `id_carrier` and/or
+  `id_reference` instead, and the hook returned an empty string. Resolution
+  now accepts all three, via `AbstractPPCarrier::getCarrierKeyFromHookParams()`.
+- **Carrier identity no longer breaks in multistore.** `*_ID` / `*_ID_REF`
+  are written globally as well as shop-scoped, and lookups fall back to any
+  non-zero row. A module installed or configured in one shop's context was
+  invisible to every sibling shop: the carrier rendered, its extra content
+  did not.
+- **Carrier identity no longer goes stale after a back-office carrier edit.**
+  Matching is done on the stable `id_reference` first; PrestaShop reassigns
+  `id_carrier` on every edit. Related: `hookActionCarrierUpdate` read
+  PrestaShop's parameters the wrong way round and wrote the dead carrier id
+  back over the live one. `upgrade-1.0.9.php` repairs installs affected by this.
+- **Checkout assets now register on one-page-checkout modules.** Registration
+  tested `php_self` against a fixed list, but a `ModuleFrontController` leaves
+  `php_self` null, so every OPC module fell through and the selector's CSS/JS
+  never loaded. `AbstractPPCarrier::isCheckoutContext()` now also matches the
+  controller parameter, known OPC module names, and module front controllers
+  whose class name says "checkout".
+
+### Added
+- Terminals are fetched from the API once, throttled to every 15 minutes per
+  country, when the local table is empty — a fresh install whose maintenance
+  cron was never wired up no longer shows an empty picker.
+- `actionValidateStepComplete` captures the terminal submitted by the plain
+  `<select>`, so a selection made without JavaScript is persisted rather than
+  silently dropped.
+
+### Changed
+- Leaflet is bundled with the module (`views/js/lib/`, `views/css/lib/`)
+  instead of being pulled from unpkg.com at checkout. The CDN request was the
+  first thing a Content-Security-Policy or restricted egress killed, and it
+  took the map with it.
+
 ## [1.0.8] — 2026-07-03
 
 ### Changed

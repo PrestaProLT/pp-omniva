@@ -1,4 +1,5 @@
 <div class="ppomniva-pickup"
+     data-has-server-list="{if $ppomniva_terminals_by_city}1{else}0{/if}"
      data-ajax-url="{$ppomniva_ajax_url}"
      data-country="{$ppomniva_country_code}"
      data-postcode="{$ppomniva_postcode|escape:'html':'UTF-8'}"
@@ -32,6 +33,35 @@
             {l s='Change' d='Modules.Ppomniva.Shop' mod='ppomniva'}
         </button>
     </div>
+
+    {* Baseline picker: a real, server-rendered form control listing every
+       pickup point. This is what makes the selector visible no matter what
+       happens afterwards — blocked assets, a checkout that never runs our JS,
+       an unreachable module route. checkout.js hides and disables it once the
+       map + filterable list below have initialised. *}
+    {if $ppomniva_terminals_by_city}
+        <div class="ppomniva-pickup__basic js-ppomniva-basic"{if $ppomniva_selected_terminal} style="display:none"{/if}>
+            <label class="ppomniva-pickup__basic-label" for="ppomniva-terminal-select">
+                {l s='Select a pickup point' d='Modules.Ppomniva.Shop' mod='ppomniva'}
+            </label>
+            <select id="ppomniva-terminal-select"
+                    name="ppomniva_terminal_select"
+                    class="ppomniva-pickup__basic-select js-ppomniva-basic-select">
+                <option value="">{l s='Select a pickup point' d='Modules.Ppomniva.Shop' mod='ppomniva'}</option>
+                {foreach $ppomniva_terminals_by_city as $city => $cityTerminals}
+                    <optgroup label="{$city|escape:'html':'UTF-8'}">
+                        {foreach $cityTerminals as $terminal}
+                            <option value="{$terminal.terminal_id|escape:'html':'UTF-8'}"{if $ppomniva_selected_terminal && $ppomniva_selected_terminal.id == $terminal.terminal_id} selected="selected"{/if}>{if $terminal.display_name}{$terminal.display_name|escape:'html':'UTF-8'}{else}{$terminal.name|escape:'html':'UTF-8'}{/if}{if $terminal.address}, {$terminal.address|escape:'html':'UTF-8'}{/if}</option>
+                        {/foreach}
+                    </optgroup>
+                {/foreach}
+            </select>
+        </div>
+    {/if}
+
+    {* Terminal payload for checkout.js — already resolved server-side, so the
+       enhanced UI needs no AJAX round trip to draw itself. *}
+    <script type="application/json" class="js-ppomniva-terminals">{$ppomniva_terminals_json nofilter}</script>
 
     {* Map container *}
     <div class="ppomniva-pickup__map-container js-ppomniva-map-wrap" {if $ppomniva_selected_terminal}style="display:none"{/if}>
