@@ -46,6 +46,7 @@ class PPOmniva extends AbstractPPCarrier
         'displayAdminProductsExtra',
         'actionProductUpdate',
         'actionValidateOrder',
+        'actionValidateStepComplete',
         'actionObjectOrderUpdateAfter',
         'actionPresentPaymentOptions',
         'displayBackOfficeHeader',
@@ -55,7 +56,7 @@ class PPOmniva extends AbstractPPCarrier
     {
         $this->name = 'ppomniva';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.0.8';
+        $this->version = '1.0.9';
         $this->author = 'PrestaPro';
         $this->author_uri = 'https://prestapro.lt/modules/ppomniva';
         $this->need_instance = 0;
